@@ -113,7 +113,7 @@ export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoadin
         {/* 加载提示 */}
         {isLoading && (
           <div className="mt-4 text-center text-[var(--color-text-muted)] text-sm">
-            <p>正在为您生成精彩的词条，请稍候...</p>
+            <p>正在生成词条，请稍候...</p>
             <div className="mt-2">
               <div className="inline-flex space-x-1">
                 <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>

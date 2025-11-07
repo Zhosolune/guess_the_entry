@@ -137,6 +137,23 @@ export const CorrectPanel: React.FC<CorrectPanelProps> = ({ guessedChars }) => {
     prevGuessedRef.current = new Set(guessedChars);
   }, [guessedChars]);
 
+  /**
+   * 空态渲染（与坟场区域保持一致的卡片样式）
+   * 当没有已猜对字符时，显示居中图标、标题与提示文案，均使用 muted 文本颜色。
+   * 目的：统一两区域的初始视觉与信息层级，避免样式不一致。
+   */
+  if (correctList.length === 0) {
+    return (
+      <div className="card-flat section text-center sm:mb-0 mx-4">
+        <div className="flex items-center justify-center mb-4">
+          <CheckCircle className="w-8 h-8 text-[var(--color-text-muted)]" />
+        </div>
+        <h3 className="text-lg font-semibold text-[var(--color-text-muted)] mb-2">已猜对字符</h3>
+        <p className="text-[var(--color-text-muted)] text-sm">还没有猜对的字符</p>
+      </div>
+    );
+  }
+
   return (
     <div className="card-flat section mx-4">
       <div className="flex items-center justify-between">
@@ -155,15 +172,11 @@ export const CorrectPanel: React.FC<CorrectPanelProps> = ({ guessedChars }) => {
         </button>
       </div>
 
-      {correctList.length === 0 ? (
-        <p className="text-sm text-emerald-600 mt-3">暂无已猜对字符</p>
-      ) : (
-        <div className="mt-4">
-          <div className={`graveyard-stream ${showLabels ? 'labels-visible' : ''}`}>
-            {renderGroupedStream(groupedMap, showLabels)}
-          </div>
+      <div className="mt-4">
+        <div className={`graveyard-stream ${showLabels ? 'labels-visible' : ''}`}>
+          {renderGroupedStream(groupedMap, showLabels)}
         </div>
-      )}
+      </div>
     </div>
   );
 };

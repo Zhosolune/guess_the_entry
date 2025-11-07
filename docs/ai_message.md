@@ -639,3 +639,21 @@
 
 后续可选：
 - 若需要在 Tailwind 层面使用，考虑添加 `border-[var(--color-border-success-accent)]` 等实用类的封装或抽象组件。
+### 2025-11-07 — UI一致性：CorrectPanel 空态样式对齐坟场
+
+- 目的：将“已猜对字符”面板在无数据时的初始展示与“坟场”面板一致，统一卡片视觉与信息层级。
+- 影响文件：
+  - `src/components/CorrectPanel/CorrectPanel.tsx`
+- 主要改动：
+  - 当 `guessedChars` 为空时，提前返回统一的空态卡片结构：居中放置图标、标题与提示文案，采用 `text-[var(--color-text-muted)]`。
+  - 与坟场一致的容器类：`card-flat section text-center sm:mb-0 mx-4`。
+  - 保留非空态下原有标题、标签切换与流式分组布局逻辑不变。
+
+- 验证建议：
+  - 启动开发服务器：`npm run dev`。
+  - 在游戏初始或重置后，确保 CorrectPanel 显示居中图标+标题+提示文案，且配色为 muted，与坟场空态一致。
+  - 切换暗色/亮色主题，检查文本与图标可读性、对齐与留白是否一致。
+  - 输入若干正确字符，确认非空态仍显示顶部标题与标签切换按钮，列表流式布局正常。
+
+- 注意事项/后续可选优化：
+  - 如需进一步统一非空态的滚动容器（例如与坟场的 `graveyard-scroll` 一致），可在 CorrectPanel 的非空态外层补充滚动容器类，但当前非空态无需变更以满足需求（遵循最小可用实现）。
