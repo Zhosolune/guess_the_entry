@@ -289,7 +289,7 @@ export const GameBoard: React.FC<GameBoardProps> = memo(({
             disabled={isLoading || !inputValue}
             className="btn-primary"
           >
-            猜测
+            确认
           </button>
         </div>
       </form>

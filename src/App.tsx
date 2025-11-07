@@ -150,11 +150,11 @@ const App: React.FC = memo(() => {
               </div>
               
               <div className="lg:col-span-1 space-y-4">
-                <CorrectPanel guessedChars={gameState.guessedChars} />
                 <Graveyard
                   graveyard={gameState.graveyard}
                   onClear={handleClearGraveyard}
                 />
+                <CorrectPanel guessedChars={gameState.guessedChars} />
               </div>
             </div>
           </div>

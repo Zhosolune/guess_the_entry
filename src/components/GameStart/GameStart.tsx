@@ -46,7 +46,7 @@ export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoadin
   }, [selectedCategory, onStartGame]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-app)] flex justify-center p-4">
+    <div className="min-h-screen bg-[var(--color-surface)] flex justify-center p-4">
       <div className="max-w-2xl w-full">
         {/* 顶部栏承载标题与规则弹窗，主页内容整体下移 */}
 
@@ -54,7 +54,7 @@ export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoadin
         <h2 className="text-xl font-semibold text-[var(--color-text)] mb-4 text-center">选择领域</h2>
         <div className="card-flat section mb-6">
           {/* 常规领域网格（不含“随机”） */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 text-[var(--color-text)] gap-3 mb-4">
             {Object.entries(CATEGORIES)
               .filter(([key]) => key !== '随机')
               .map(([key, label]) => (

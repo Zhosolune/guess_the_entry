@@ -36,10 +36,11 @@ export const designTokens = {
       bgApp: '#0f172a', // slate-900
       surface: '#111827', // gray-900
       border: '#334155', // slate-700
-      text: '#e5e7eb', // gray-200
+      // 再调暗一级，采用 slate-300，降低眩光同时保持与 textMuted 区分
+      text: '#cbd5e1', // slate-300
       textMuted: '#94a3b8', // slate-400
       btnBg: '#1f2937', // gray-800
-      btnFg: '#e5e7eb', // gray-200
+      btnFg: '#cbd5e1', // slate-300
       btnBgHover: '#374151', // gray-700
       btnBorder: '#334155', // slate-700
       primary: '#4772c3',
