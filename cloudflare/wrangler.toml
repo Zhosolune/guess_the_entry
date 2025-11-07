@@ -1,0 +1,20 @@
+name = "guess-game-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "guess-game-api-prod"
+
+[env.staging]
+name = "guess-game-api-staging"
+
+# 环境变量
+[vars]
+ENVIRONMENT = "development"
+
+# 密钥（需要在部署时设置）
+# DEEPSEEK_API_KEY = "your-deepseek-api-key-here"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "46b0fe5a88eb4f2883c47fdb19a6cbc6"

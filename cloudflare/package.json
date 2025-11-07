@@ -1,0 +1,23 @@
+{
+  "name": "guess-game-api",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for Guess Game API",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "api",
+    "game"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

@@ -1,0 +1,328 @@
+/**
+ * 动画样式文件
+ * 为游戏组件添加过渡和动画效果
+ */
+
+/* 字符揭示动画 */
+@keyframes revealChar {
+  0% {
+    transform: rotateY(180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: rotateY(90deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+.reveal-animation {
+  animation: revealChar 0.6s ease-out;
+  transform-style: preserve-3d;
+}
+
+/* 统一字符块样式 */
+.char-block {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.2rem;
+  margin: 0;
+}
+
+/* 遮盖字符样式 */
+/*
+  纯灰遮罩样式（无中心深色方块）
+  - 作用：用于未揭示字符的遮罩显示，采用纯灰色半透明填充
+  - 设计：适中透明度，圆角与轻微内阴影保证边缘过渡自然
+  - 无交互：移除悬浮位移效果，避免抢占视觉注意力
+*/
+.masked-char {
+  background: rgba(156, 163, 175, 0.35); /* gray-400 @ 35% */
+  border-radius: 0.2rem;
+  text-align: center;
+  line-height: 1.5rem;
+  color: transparent;
+  transition: box-shadow 150ms ease;
+}
+
+.masked-char:hover {
+  transform: none;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.08);
+}
+
+/* 已揭示字符样式 */
+.revealed-char {
+  font-size: 1rem;
+  color: #1f2937;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* 移除蓝色扫光效果，避免遮罩动画的额外光效干扰 */
+
+/* 坟场字符样式 */
+.graveyard-char {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  /* border: 2px solid #fca5a5; */
+  border-radius: 0.2rem;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #dc2626;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.graveyard-char:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+/* 已猜对字符样式 */
+.correct-char {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  /* border: 2px solid #10b981; */
+  border-radius: 0.2rem;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #065f46;
+  transition: all 0.2s ease;
+}
+
+.correct-char:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+/* 自动揭示（灰框）字符样式 */
+.auto-revealed-char {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px dashed #9ca3af; /* gray-400 */
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280; /* gray-500 */
+  background: #f9fafb; /* gray-50 */
+}
+
+/* 成功横幅样式 */
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #10b981;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.15);
+  animation: victory 0.8s ease-out;
+}
+
+/* 输入框聚焦动画 */
+.input-focus {
+  transition: all 0.3s ease;
+}
+
+.input-focus:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* 按钮点击动画 */
+.btn-click {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-click:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn-click::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-click:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* 胜利动画 */
+@keyframes victory {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.victory-animation {
+  animation: victory 0.8s ease-out;
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  animation: confetti 3s linear infinite;
+}
+
+/* 进度条动画 */
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress-width);
+  }
+}
+
+.progress-bar {
+  transition: width 0.6s ease;
+  animation: progressFill 0.8s ease-out;
+}
+
+/* 响应式优化 */
+@media (max-width: 640px) {
+  .char-block {
+    width: 1.25rem;
+    height: 1.25rem;
+    line-height: 1.25rem;
+    margin: 0 0.0625rem;
+  }
+  .masked-char {
+    width: 1.25rem;
+    height: 1.25rem;
+    line-height: 1.25rem;
+    font-size: 0.625rem;
+    margin: 0 0.0625rem;
+  }
+  .auto-revealed-char {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.875rem;
+  }
+  
+  .graveyard-char {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.875rem;
+  }
+  
+  .correct-char {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* 坟场分组布局样式 */
+.graveyard-scroll {
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+.graveyard-group {
+  border-top: 1px solid #e5e7eb; /* gray-200 */
+  padding-top: 0.5rem; /* 分区与内容间距 */
+}
+
+.graveyard-group:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.graveyard-group-label {
+  position: sticky; /* 标签固定显示 */
+  top: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(2px);
+  font-size: 0.8rem; /* 标签小字号 */
+  font-weight: 200;
+  color: #6b7280; /* gray-500 */
+  margin-bottom: 0.2rem; /* 标签与内容间距 */
+  margin-top: 0.2rem; /* 标签与内容间距 */
+  /* padding: 0.25rem 0.25rem; 适度留白增强可读性 */
+}
+
+.graveyard-group-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem; /* 分组内字块间距 */
+}
+
+/* 暗色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .masked-char {
+    background: rgba(75, 85, 99, 0.35); /* gray-600 @ 35%，暗色下保持适中可见度 */
+    color: transparent;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  .masked-char:hover {
+    transform: none;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.2);
+  }
+  .auto-revealed-char {
+    border-color: #6b7280; /* gray-600 */
+    color: #9ca3af; /* gray-400 */
+    background: #1f2937; /* gray-800 */
+  }
+  .success-banner {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+    border-color: #10b981;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25);
+  }
+}
