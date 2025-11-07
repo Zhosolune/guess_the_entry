@@ -113,7 +113,7 @@ const App: React.FC = memo(() => {
           />
         )}
 
-        {gameState.gameStatus === 'playing' && gameState.currentEntry && (
+        {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && gameState.currentEntry && (
           <div className="container mx-auto max-w-6xl">
             <div className="mb-4">
               {/* 顶部栏正下方的居中统计（缩小字号） */}
@@ -136,6 +136,18 @@ const App: React.FC = memo(() => {
                   error={gameState.error}
                   gameTime={time}
                   gameStatus={gameState.gameStatus}
+                  /**
+                   * 再来一局回调：停止与重置计时器，重置游戏到初始界面
+                   */
+                  onRestart={() => {
+                    try {
+                      stopTimer();
+                      resetTimer();
+                      resetGame();
+                    } catch (e) {
+                      console.error('重置失败:', e);
+                    }
+                  }}
                 />
               </div>
               

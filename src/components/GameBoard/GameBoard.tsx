@@ -14,6 +14,11 @@ interface GameBoardProps {
   gameTime: number;
   /** 游戏状态：用于触发胜利动画与自动揭示 */
   gameStatus: GameStatus;
+  /**
+   * 再来一局回调
+   * 在胜利后替代输入框显示，点击后返回初始界面
+   */
+  onRestart?: () => void;
 }
 
 /**
@@ -30,11 +35,11 @@ export const GameBoard: React.FC<GameBoardProps> = memo(({
   isLoading,
   error,
   gameTime,
-  gameStatus
+  gameStatus,
+  onRestart
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showVictory, setShowVictory] = useState(false);
-  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [autoReveal, setAutoReveal] = useState(false);
   const [newlyRevealed, setNewlyRevealed] = useState<string[]>([]);
   // 记录已触发过揭示动画的字符，避免重复动画
@@ -226,18 +231,10 @@ export const GameBoard: React.FC<GameBoardProps> = memo(({
     if (gameStatus === 'victory') {
       if (!showVictory) {
         setShowVictory(true);
-        toast.success('🎉 恭喜获胜！', {
-          description: `用时 ${formattedTime}，尝试 ${attempts} 次`
-        });
       }
-      setShowSuccessOverlay(true);
-      const timer = setTimeout(() => {
-        setShowSuccessOverlay(false);
-        setAutoReveal(true);
-      }, 1500);
-      return () => clearTimeout(timer);
+      // 取消动画：不展示成功横幅，不做延迟，立即自动揭示剩余字符
+      setAutoReveal(true);
     } else {
-      setShowSuccessOverlay(false);
       setAutoReveal(false);
       setShowVictory(false);
     }
@@ -265,34 +262,41 @@ export const GameBoard: React.FC<GameBoardProps> = memo(({
 
   return (
     <div className="px-4">
-      {showSuccessOverlay && (
-        <div className="success-banner mb-4">
-          <div className="text-3xl">🎉</div>
-          <div className="text-lg font-bold text-emerald-700">恭喜通关！</div>
-          <div className="text-sm text-emerald-600">即将展示完整答案与拓展阅读</div>
-        </div>
-      )}
-      {/* 输入区域 */}
-      <form onSubmit={handleSubmit} className="space-y-4 mb-4">
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={handleInputChange}
-            placeholder="来猜~"
-            className="form-input flex-1"
-            disabled={isLoading}
-            autoFocus
-          />
+      {/* 输入区域 / 胜利庆祝与再来一局 */}
+      {gameStatus !== 'victory' ? (
+        <form onSubmit={handleSubmit} className="space-y-4 mb-4">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={handleInputChange}
+              placeholder="来猜~"
+              className="form-input flex-1"
+              disabled={isLoading}
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !inputValue}
+              className="btn-primary"
+            >
+              确认
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="space-y-3 mb-4 card-flat section p-4 text-center">
+          <div className="text-2xl">恭喜通关！</div>
+          <div className="text-[var(--color-text-muted)]">用时 {formattedTime}，尝试 {attempts} 次</div>
           <button
-            type="submit"
-            disabled={isLoading || !inputValue}
+            type="button"
             className="btn-primary"
+            onClick={() => onRestart && onRestart()}
           >
-            确认
+            再来一局
           </button>
         </div>
-      </form>
+      )}
       <div className="card-flat section p-4">
         <div className="justify-center">
           {/* 词条标题 */}
