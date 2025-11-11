@@ -973,3 +973,10 @@
   - TopBar：新增 `onOpenSettings?: () => void` 回调；右侧容器改为 `flex gap-2`，插入设置按钮并复用与主题按钮一致的 `inline-flex p-2` 风格；使用提供的 Settings SVG。
 - 验证：在 `http://localhost:5174/` 预览，确认设置按钮与主题按钮并排显示、悬停与颜色反馈一致。
 - 下一步（可选）：绑定设置面板的打开逻辑或路由；若需要，我将补充设置面板的最小实现（抽屉或对话框）。
+### 2025-11-11 设置按钮可见性调整
+
+- 目标：设置按钮仅在游戏界面（playing/victory）显示，初始页面（start）不可见。
+- 修改内容：
+  - TopBar：设置按钮条件渲染，仅在提供 `onOpenSettings` 回调时显示。
+  - App：计算 `showSettingsButton`，在游戏界面传入 `onOpenSettings`（占位实现）；初始页面不传递以隐藏按钮。
+- 验证：在 `http://localhost:5174/` 预览，初始页无设置按钮，进入游戏后按钮出现并紧挨主题按钮，风格一致。

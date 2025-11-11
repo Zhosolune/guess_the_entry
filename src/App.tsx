@@ -106,6 +106,18 @@ const App: React.FC = memo(() => {
     }
   }, [gameState.gameStatus, finalSeconds, time, stopTimer]);
 
+  /**
+   * 设置按钮点击处理（占位实现）
+   * 仅在游戏界面时提供，初始页面不渲染设置按钮
+   * 后续可替换为打开设置面板的逻辑
+   */
+  const handleOpenSettings = React.useCallback((): void => {
+    // TODO: 打开设置面板（抽屉/对话框），当前为占位实现
+    console.debug('打开设置面板');
+  }, []);
+
+  const showSettingsButton = (gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory');
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-[var(--color-bg-app)] flex flex-col">
@@ -123,6 +135,7 @@ const App: React.FC = memo(() => {
         <TopBar 
           title="词条猜测游戏" 
           progress={gameState.gameStatus === 'playing' ? gameProgress : undefined}
+          onOpenSettings={showSettingsButton ? handleOpenSettings : undefined}
         />
         
         {gameState.gameStatus === 'start' && (
