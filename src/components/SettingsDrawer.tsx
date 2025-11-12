@@ -1,0 +1,145 @@
+import React from 'react';
+
+export type QuickRefPosition = 'bottom' | 'left' | 'right';
+
+interface SettingsDrawerProps {
+  /**
+   * 是否打开设置抽屉
+   */
+  isOpen: boolean;
+  /**
+   * 关闭抽屉的回调
+   */
+  onClose: () => void;
+  /**
+   * 当前速查表位置设置
+   */
+  quickRefPosition: QuickRefPosition;
+  /**
+   * 更改速查表位置设置
+   */
+  onChangeQuickRefPosition: (pos: QuickRefPosition) => void;
+}
+
+/**
+ * 设置抽屉组件（从顶部栏下方向下展开）
+ * - 顶部定位在 TopBar 下方，层级最高
+ * - 支持点击遮罩区域关闭
+ * - 抽屉底边水平居中放置关闭按钮（X）
+ * - 内含设置项：速查表位置（下/左/右），变更后立即回调生效
+ */
+const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
+  isOpen,
+  onClose,
+  quickRefPosition,
+  onChangeQuickRefPosition,
+}) => {
+  /**
+   * 处理遮罩点击
+   * 若点击的是遮罩（非抽屉内容），则关闭设置抽屉
+   *
+   * @returns void
+   */
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    e.stopPropagation();
+    onClose();
+  };
+
+  /**
+   * 阻止内容区域事件冒泡，避免误关闭
+   *
+   * @param e React.MouseEvent<HTMLDivElement>
+   * @returns void
+   */
+  const stopPropagation = (e: React.MouseEvent<HTMLDivElement>): void => {
+    e.stopPropagation();
+  };
+
+  /**
+   * 渲染速查表位置单选项
+   *
+   * @param label string 选项显示文案
+   * @param value QuickRefPosition 对应枚举值
+   * @returns JSX.Element
+   */
+  const renderOption = (label: string, value: QuickRefPosition): JSX.Element => {
+    const active = quickRefPosition === value;
+    return (
+      <button
+        type="button"
+        onClick={() => onChangeQuickRefPosition(value)}
+        className={`px-3 py-1 rounded-md border border-transparent text-sm transition-colors ${
+          active
+            ? 'bg-[var(--color-primary)] text-white border-transparent'
+            : 'bg-[var(--color-bg-card)] text-[var(--color-text)]  hover:border-[var(--color-primary)]'
+        }`}
+        style={{
+          borderRadius: '0',
+        }}
+        aria-pressed={active}
+      >
+        {label}
+      </button>
+    );
+  };
+
+  return (
+    <>
+      {/* 遮罩：点击关闭，仅在打开时渲染 */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[30] bg-black/30"
+          onClick={handleBackdropClick}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* 抽屉本体：位于 TopBar 下方，滑动进入 */}
+      <div
+        className={`fixed top-[var(--topbar-h)] left-0 right-0 z-[40] transform transition-transform duration-200 ${
+          isOpen ? 'translate-y-0' : '-translate-y-full'
+        }`}
+        role="dialog"
+        aria-modal={isOpen}
+        aria-label="设置面板"
+        onClick={stopPropagation}
+      >
+        <div className="w-full bg-[var(--color-surface)]">
+          <div className="max-w-2xl mx-auto px-3 section bg-[var(--color-surface)] rounded-none">
+
+            <div className="space-y-4">
+              {/* 速查表位置设置 */}
+              <div>
+                <div className="text-[var(--color-text)] mb-2">速查表位置</div>
+                <div className="flex items-center gap-0">
+                  {renderOption('下', 'bottom')}
+                  {renderOption('左', 'left')}
+                  {renderOption('右', 'right')}
+                </div>
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">更改后，速查表唤起时将在所选位置显示。</p>
+              </div>
+            </div>
+
+            {/* 底边居中关闭按钮 */}
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                className="btn-flat"
+                onClick={onClose}
+                aria-label="关闭设置"
+                title="关闭设置"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default SettingsDrawer;

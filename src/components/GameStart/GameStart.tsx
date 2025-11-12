@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { GameCategory } from '../../types/game.types';
 
 interface GameStartProps {
-  onStartGame: (category: GameCategory) => void;
+  onStartGame: (category: GameCategory, enableHints: boolean) => void;
   isLoading: boolean;
 }
 
@@ -18,6 +18,7 @@ interface GameStartProps {
 export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoading }) => {
   const [selectedCategory, setSelectedCategory] = useState<GameCategory | ''>('');
   const [hoveredCategory, setHoveredCategory] = useState<string>('');
+  const [enableHints, setEnableHints] = useState<boolean>(true);
 
   /**
    * 处理领域选择
@@ -26,24 +27,45 @@ export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoadin
     setSelectedCategory(category);
   }, []);
 
+  /**
+   * 切换“开启提示”滑动开关状态
+   *
+   * 功能描述：在开始页滑动开关点击时反转 `enableHints` 状态，用于控制游戏界面提示按钮的启用/禁用。
+   * 参数说明：无
+   * 返回值说明：void
+   * 异常说明：无
+   */
+  const handleToggleHints = useCallback((): void => {
+    setEnableHints((prev) => !prev);
+  }, []);
+
   // 随机选项策略：使用“随机”类别，不提前暴露具体领域
 
   /**
    * 处理游戏开始
+   * 
+   * 功能描述：
+   * - 校验是否选择领域；
+   * - 将“开启提示”开关状态随领域一起传给上层；
+   * 
+   * 参数说明：无（使用组件内部状态 `selectedCategory` 与 `enableHints`）
+   * 返回值说明：Promise<void>
+   * 异常说明：
+   * - 若未选择领域，抛出用户可见错误提示（toast），不调用上层回调。
    */
-  const handleStartGame = useCallback(async () => {
+  const handleStartGame = useCallback(async (): Promise<void> => {
     if (!selectedCategory) {
       toast.error('请先选择一个领域');
       return;
     }
 
     try {
-      await onStartGame(selectedCategory);
+      await onStartGame(selectedCategory as GameCategory, enableHints);
     } catch (error) {
       console.error('游戏开始失败:', error);
       toast.error('游戏开始失败，请稍后重试');
     }
-  }, [selectedCategory, onStartGame]);
+  }, [selectedCategory, enableHints, onStartGame]);
 
   return (
     <div className=" bg-[var(--color-surface)] flex justify-center p-4">
@@ -108,6 +130,22 @@ export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoadin
               </>
             )}
           </button>
+          {/* 开始按钮下方：开启提示滑动开关（默认开启） */}
+          <div className="mt-3 flex items-center justify-center gap-3">
+            <span className="text-[var(--color-text)] select-none">开启提示</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={enableHints}
+              aria-label="开启提示"
+              onClick={handleToggleHints}
+              className={`relative inline-flex w-8 h-5 rounded-full transition-colors duration-200 focus:outline-none ${enableHints ? 'bg-emerald-500' : 'bg-gray-300'}`}
+            >
+              <span
+                className={`absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${enableHints ? 'translate-x-3' : 'translate-x-0'}`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* 加载提示 */}

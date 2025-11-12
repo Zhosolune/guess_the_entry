@@ -11,6 +11,8 @@ export interface QuickRefDrawerProps {
   graveyard: string[];
   /** 已猜对字符集合 */
   guessedChars: Set<string>;
+  /** 抽屉位置：bottom/left/right，默认 bottom */
+  position?: 'bottom' | 'left' | 'right';
 }
 
 /**
@@ -31,7 +33,18 @@ export interface QuickRefDrawerProps {
  * 异常说明：
  * - 本组件不抛出异常；交互错误通过控制台输出或父组件处理。
  */
-export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose, graveyard, guessedChars }) => {
+export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose, graveyard, guessedChars, position = 'bottom' }) => {
+  /**
+   * 记录上一次的位置，用于判断是否需要禁用过渡动画
+   */
+  const prevPositionRef = React.useRef<'bottom' | 'left' | 'right'>(position);
+  /**
+   * 当位置变更时，更新引用值
+   */
+  React.useEffect(() => {
+    prevPositionRef.current = position;
+  }, [position]);
+
   /**
    * 关闭按钮点击处理
    * 
@@ -56,14 +69,58 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
     }
     onClose();
   };
+  /**
+   * 计算容器定位样式
+   * 根据 position 切换抽屉的定位边与入场/退场动画方向
+   *
+   * @returns string Tailwind 类名
+   */
+  const containerClass = React.useMemo<string>(() => {
+    // 仅在开/关时使用过渡动画；位置变更时禁用动画
+    const samePosition = prevPositionRef.current === position;
+    const transition = samePosition ? 'transition-transform duration-200' : '';
+    if (position === 'left') {
+      return `fixed inset-y-0 left-0 z-40 transform ${transition} ${isOpen ? 'translate-x-0' : '-translate-x-full'}`;
+    }
+    if (position === 'right') {
+      return `fixed inset-y-0 right-0 z-40 transform ${transition} ${isOpen ? 'translate-x-0' : 'translate-x-full'}`;
+    }
+    // default bottom
+    return `fixed bottom-0 inset-x-0 z-40 transform ${transition} ${isOpen ? 'translate-y-0' : 'translate-y-full'}`;
+  }, [position, isOpen]);
+
+  /**
+   * 计算内部容器样式（尺寸与边距）
+   * 底部抽屉需要预留底部工具栏高度；侧边抽屉需要设置宽度与满高
+   *
+   * @returns string Tailwind 类名
+   */
+  const innerClass = React.useMemo<string>(() => {
+    if (position === 'left' || position === 'right') {
+      return 'bg-[var(--color-surface)] border-[var(--color-border)] h-full w-[86vw] md:w-[420px]';
+    }
+    return 'bg-[var(--color-surface)] border-t border-[var(--color-border)] mb-[var(--bottombar-h)]';
+  }, [position]);
+
+  /**
+   * 计算滚动区域高度
+   * 侧边抽屉使用满高，底部抽屉维持原有最大高度逻辑
+   */
+  const scrollClass = React.useMemo<string>(() => {
+    if (position === 'left' || position === 'right') {
+      return 'h-full overflow-y-auto py-2';
+    }
+    return 'max-h-[80vh] md:max-h-[88vh] overflow-y-auto py-2';
+  }, [position]);
   return (
     <div
       role="dialog"
       aria-modal="false"
       aria-hidden={!isOpen}
-      className={`fixed bottom-0 inset-x-0 z-40 transform transition-transform duration-200 ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
+      className={containerClass}
     >
-      <div className="bg-[var(--color-bg-card)] border-t border-[var(--color-border)] shadow-lg">
+      {/* 样式说明：抽屉背景不透明以提升可读性 */}
+      <div className={innerClass}>
         <div className="flex items-center justify-between px-4 py-2">
           <h2 className="text-sm font-medium text-[var(--color-text)]">速查表</h2>
           <button
@@ -80,8 +137,8 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
           </button>
         </div>
 
-        {/* 内容区：滚动容器（提升 PC 端高度） */}
-        <div className="max-h-[65vh] md:max-h-[75vh] overflow-y-auto py-2">
+        {/* 内容区：滚动容器 */}
+        <div className={scrollClass}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Graveyard graveyard={graveyard} />
             <CorrectPanel guessedChars={guessedChars} />

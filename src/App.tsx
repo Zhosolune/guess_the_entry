@@ -4,6 +4,7 @@ import { ErrorBoundary } from './utils/errorHandler';
 import { GameStart } from './components/GameStart/GameStart';
 import { GameLayout } from './components/GameLayout/GameLayout';
 import QuickRefDrawer from './components/QuickRefDrawer';
+import SettingsDrawer, { QuickRefPosition } from './components/SettingsDrawer';
 import { useGameState } from './hooks/useGameState';
 import { useTimestampTimer } from './hooks/useTimer';
 import { GameCategory } from './types/game.types';
@@ -35,14 +36,37 @@ const App: React.FC = memo(() => {
   const [isQuickRefOpen, setIsQuickRefOpen] = React.useState<boolean>(false);
 
   /**
-   * 处理游戏开始
+   * 设置抽屉显隐状态（默认隐藏）
    */
-  const handleStartGame = useCallback(async (category: GameCategory) => {
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState<boolean>(false);
+
+  /**
+   * 速查表位置设置（默认 bottom）
+   * bottom/left/right
+   */
+  const [quickRefPosition, setQuickRefPosition] = React.useState<QuickRefPosition>('bottom');
+
+  /**
+   * 处理游戏开始
+   * 
+   * 功能描述：
+   * - 初始化游戏并启动计时；
+   * - 接收“开启提示”开关状态并下发到游戏界面；
+   * 
+   * 参数说明：
+   * - category: GameCategory 选择的领域
+   * - enableHints: boolean 是否开启提示按钮
+   * 返回值说明：Promise<void>
+   * 异常说明：初始化失败时停止计时并重置。
+   */
+  const [hintsEnabled, setHintsEnabled] = React.useState<boolean>(true);
+  const handleStartGame = useCallback(async (category: GameCategory, enableHints: boolean) => {
     try {
       clearError();
       // 开始新局前清空最终用时冻结
       setFinalSeconds(null);
       start();
+      setHintsEnabled(enableHints);
       await initializeGame(category);
     } catch (error) {
       console.error('游戏初始化失败:', error);
@@ -112,8 +136,8 @@ const App: React.FC = memo(() => {
    * 后续可替换为打开设置面板的逻辑
    */
   const handleOpenSettings = React.useCallback((): void => {
-    // TODO: 打开设置面板（抽屉/对话框），当前为占位实现
-    console.debug('打开设置面板');
+    // 打开设置抽屉
+    setIsSettingsOpen(true);
   }, []);
 
   const showSettingsButton = (gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory');
@@ -159,32 +183,45 @@ const App: React.FC = memo(() => {
               error={gameState.error}
               gameTime={gameState.gameStatus === 'victory' && finalSeconds !== null ? finalSeconds : time}
               gameStatus={gameState.gameStatus}
-              onRestart={() => {
-                try {
-                  stopTimer();
-                  resetTimer();
-                  setFinalSeconds(null);
-                  resetGame();
-                  setIsQuickRefOpen(false);
-                } catch (e) {
-                  console.error('重置失败:', e);
-                }
-              }}
-              onToggleQuickRef={() => setIsQuickRefOpen(v => !v)}
-            />
-          </div>
-        )}
-        {/* 速查表抽屉（全局固定定位，默认隐藏） */}
-        {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && (
-          <QuickRefDrawer
-            isOpen={isQuickRefOpen}
-            onClose={() => setIsQuickRefOpen(false)}
-            graveyard={gameState.graveyard}
-            guessedChars={gameState.guessedChars}
-          />
-        )}
+              hintsEnabled={hintsEnabled}
+              quickRefOpen={isQuickRefOpen}
+          onRestart={() => {
+            try {
+              stopTimer();
+              resetTimer();
+              setFinalSeconds(null);
+              resetGame();
+              setIsQuickRefOpen(false);
+              setIsSettingsOpen(false);
+            } catch (e) {
+              console.error('重置失败:', e);
+            }
+          }}
+          onToggleQuickRef={() => setIsQuickRefOpen(v => !v)}
+        />
       </div>
-    </ErrorBoundary>
+    )}
+    {/* 速查表抽屉（全局固定定位，默认隐藏） */}
+    {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && (
+      <QuickRefDrawer
+        isOpen={isQuickRefOpen}
+        onClose={() => setIsQuickRefOpen(false)}
+        graveyard={gameState.graveyard}
+        guessedChars={gameState.guessedChars}
+        position={quickRefPosition}
+      />
+    )}
+    {/* 设置抽屉（TopBar 下方，最上层） */}
+    {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && (
+      <SettingsDrawer
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        quickRefPosition={quickRefPosition}
+        onChangeQuickRefPosition={(pos) => setQuickRefPosition(pos)}
+      />
+    )}
+  </div>
+  </ErrorBoundary>
   );
 });
 

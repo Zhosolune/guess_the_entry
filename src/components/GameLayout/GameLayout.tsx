@@ -21,8 +21,12 @@ interface GameLayoutProps {
   error: string | null;
   gameTime: number;
   gameStatus: GameStatus;
+  /** 是否开启提示按钮 */
+  hintsEnabled: boolean;
   onRestart?: () => void;
   onToggleQuickRef?: () => void;
+  /** 速查表是否打开（用于固定按钮主题色） */
+  quickRefOpen?: boolean;
 }
 
 /**
@@ -30,7 +34,7 @@ interface GameLayoutProps {
  * 整合所有游戏界面组件，实现固定布局结构
  * 顶部栏吸顶，底部工具栏吸底，文本区域可滚动
  */
-export const GameLayout: React.FC<GameLayoutProps> = memo(({
+export const GameLayout: React.FC<GameLayoutProps> = memo(({ 
   entryData,
   guessedChars,
   revealedChars,
@@ -40,14 +44,18 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   error,
   gameTime,
   gameStatus,
+  hintsEnabled,
   onRestart,
-  onToggleQuickRef
+  onToggleQuickRef,
+  quickRefOpen = false
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [newlyRevealed, setNewlyRevealed] = useState<string[]>([]);
   // 记录已触发过揭示动画的字符，避免重复动画
   const [animatedChars, setAnimatedChars] = useState<Set<string>>(new Set());
   const [hintPreview, setHintPreview] = useState<Hint | null>(null);
+  /** 提示流程激活态（用于按钮固定主题色显示） */
+  const [hintActive, setHintActive] = useState<boolean>(false);
 
   // 格式化时间显示
   const formattedTime = useMemo(() => {
@@ -124,6 +132,8 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
    */
   const handleHintClick = useCallback(async (): Promise<void> => {
     try {
+      // 开始提示流程：激活按钮主题色
+      setHintActive(true);
       const ctx: HintContext = {
         entryData: entryData,
         guessedChars: guessedChars,
@@ -134,6 +144,9 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
       setHintPreview(hint);
     } catch (err) {
       console.error('提示请求失败:', err);
+    } finally {
+      // 提示流程结束：恢复按钮原始颜色
+      setHintActive(false);
     }
   }, [entryData, guessedChars, revealedChars, attempts]);
 
@@ -234,7 +247,10 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         onHintClick={handleHintClick}
         onToggleQuickRef={onToggleQuickRef}
         disabled={isLoading}
+        hintsEnabled={hintsEnabled}
         fixed={isMobile}
+        quickRefOpen={quickRefOpen}
+        hintActive={hintActive}
       />
     </Container>
   );

@@ -991,3 +991,46 @@
 - 目标：提升“选择领域”区域的视觉宽度与点击舒适度。
 - 修改内容：将 GameStart 容器宽度从 `max-w-3xl` 调整为 `max-w-4xl`。
 - 验证：在 `http://localhost:5173/` 预览，选择区域显著变宽，布局与交互正常。
+### 2025-11-12 开始页提示开关与游戏界面联动
+
+- 目标：在开始页添加“开启提示”滑动开关（默认开启），玩家可选择是否启用提示；游戏界面提示按钮随之启用/禁用。
+- 修改内容：
+  - GameStart：新增 `enableHints` 本地状态与复选开关，`onStartGame(category, enableHints)` 传递开关值。
+  - App：新增 `hintsEnabled` 状态，`handleStartGame` 接收并下发到 GameLayout。
+  - GameLayout：新增 `hintsEnabled` 属性，转发到 BottomToolbar。
+  - BottomToolbar：新增 `hintsEnabled`，仅对“提示”按钮禁用（不影响速查表）。
+- 验证：本地预览 `http://localhost:5174/`，切换开关可见提示按钮启用/禁用联动，控制台无错误。
+
+#### 2025-11-12 UI改造：复选框改为滑动开关
+
+- 变更：将“开启提示”从复选框调整为滑动开关（按钮 `role="switch"`，`aria-checked` 随状态变化），支持键盘交互（Enter/Space）。
+- 原因：用户明确要求使用滑动开关而非复选框，保证语义与视觉一致。
+- 验证：在本地预览 `http://localhost:5174/` 中测试点击与键盘触发，状态切换与游戏界面提示按钮禁用逻辑保持一致。
+
+#### 2025-11-12 底部工具栏交互优化（PC/移动端一致）
+
+- 速查表按钮：hover 变主题色；点击后固定主题色，打开抽屉；再次点击恢复原色并关闭抽屉。实现方式：在 App 维护 `isQuickRefOpen`，通过 `quickRefOpen` 传到底部工具栏以固定颜色；使用 `onToggleQuickRef` 切换。
+- 提示按钮：hover 变主题色；点击后固定主题色，提示流程完成后恢复原色。实现方式：在 GameLayout 的 `handleHintClick` 前后设置 `hintActive`，传到底部工具栏驱动颜色固定/恢复。
+- 移动端：无 hover，自然保持点击激活态的固定颜色行为。
+- 验证：本地预览 `http://localhost:5174/`，速查表抽屉开合与按钮颜色联动符合预期；提示请求完成后按钮颜色恢复。
+
+#### 2025-11-12 速查表样式优化
+
+- 变更：将抽屉背景改为不透明（`bg-[var(--color-surface)]`），提升内容区最大高度（`max-h-[80vh] md:max-h-[88vh]`）。
+- 原因：增强速查表的可读性与信息承载能力，在 PC 端和移动端均改善滚动体验。
+- 验证：本地预览 `http://localhost:5174/`，背景视觉不透明，内容区域更高且滚动正常。
+### 2025-11-12 设置面板与速查表位置
+
+- 新增 SettingsDrawer：固定于 `top-[var(--topbar-h)]`，层级 `z-[70]`，遮罩 `z-[60]` 支持点击关闭；抽屉底边居中放置关闭按钮（X）。
+- App 集成：新增 `isSettingsOpen` 与 `quickRefPosition`（bottom/left/right），设置按钮（TopBar）点击打开抽屉，切换速查表位置后立即生效。
+- QuickRefDrawer 扩展：根据 `position` 切换定位与动画：
+  - `bottom`：`fixed bottom-0 inset-x-0` + `translate-y` 动画，保留 `mb-[var(--bottombar-h)]`；
+  - `left`：`fixed inset-y-0 left-0` + `-translate-x` 动画，宽度 `w-[86vw] md:w-[420px]`，`h-full`；
+  - `right`：`fixed inset-y-0 right-0` + `translate-x` 动画，宽度同上，`h-full`。
+- 预览验证：设置面板展开/关闭正常，速查表位置切换即时生效；浏览器无报错。
+
+#### 追加调整：层级、宽度、圆角与动画
+- 设置抽屉层级：`z-[40]`，遮罩 `z-[30]`，确保 TopBar（`z-50`）在最上层。
+- 设置抽屉宽度：容器改为 `w-full`，去掉 `max-w-4xl` 限制。
+- 圆角：设置面板卡片添加 `rounded-none`，去除圆角。
+- 速查表位置动画：在 `QuickRefDrawer` 中比较 `prevPosition` 与当前 `position`，位置变更时不添加 `transition-transform`，仅在开/关时保留动画。
