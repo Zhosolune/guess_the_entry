@@ -126,7 +126,7 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
       {/* 样式说明：抽屉背景不透明以提升可读性 */}
       <div className={innerClass}>
         <div className="flex items-center justify-between px-4 py-2">
-          <div className="text-sm text-[var(--color-text)]">速查表</div>
+          <div className="text-[var(--color-text)]">速查表</div>
           <button
             type="button"
             aria-label="关闭速查表"
@@ -134,7 +134,7 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
             onClick={handleCloseClick}
             className="inline-flex items-center p-2 text-[var(--color-text)] hover:text-[var(--color-primary)] focus:outline-none"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M18 6L6 18" />
               <path d="M6 6l12 12" />
             </svg>

@@ -4,6 +4,7 @@ import { ErrorBoundary } from './utils/errorHandler';
 import { GameStart } from './components/GameStart/GameStart';
 import { GameLayout } from './components/GameLayout/GameLayout';
 import QuickRefDrawer from './components/QuickRefDrawer';
+import ScoreboardDrawer from './components/ScoreboardDrawer';
 import SettingsDrawer, { QuickRefPosition } from './components/SettingsDrawer';
 import { useGameState } from './hooks/useGameState';
 import { useTimestampTimer } from './hooks/useTimer';
@@ -39,6 +40,11 @@ const App: React.FC = memo(() => {
    * 设置抽屉显隐状态（默认隐藏）
    */
   const [isSettingsOpen, setIsSettingsOpen] = React.useState<boolean>(false);
+  
+  /**
+   * 计分板抽屉显隐状态（默认隐藏）
+   */
+  const [isScoreboardOpen, setIsScoreboardOpen] = React.useState<boolean>(false);
 
   /**
    * 速查表位置设置（默认 bottom）
@@ -131,16 +137,53 @@ const App: React.FC = memo(() => {
   }, [gameState.gameStatus, finalSeconds, time, stopTimer]);
 
   /**
-   * 设置按钮点击处理（占位实现）
+   * 关闭所有抽屉
+   * 保证全局互斥：任意时刻仅一个抽屉处于打开状态
+   *
+   * @returns void
+   */
+  const closeAllDrawers = React.useCallback((): void => {
+    setIsQuickRefOpen(false);
+    setIsSettingsOpen(false);
+    setIsScoreboardOpen(false);
+  }, []);
+
+  /**
+   * 设置按钮点击处理
    * 仅在游戏界面时提供，初始页面不渲染设置按钮
-   * 后续可替换为打开设置面板的逻辑
+   * 互斥策略：当即将开启设置抽屉时，关闭其他抽屉
    */
   const handleOpenSettings = React.useCallback((): void => {
-    // 切换设置抽屉开关
-    setIsSettingsOpen(v => !v);
+    setIsSettingsOpen(prev => {
+      const next = !prev;
+      if (next) {
+        // 打开设置抽屉 -> 关闭其他抽屉
+        setIsQuickRefOpen(false);
+        setIsScoreboardOpen(false);
+      }
+      return next;
+    });
+  }, []);
+
+  /**
+   * 计分板按钮点击处理
+   * 仅在游戏界面时提供，初始页面不渲染计分板按钮
+   * 互斥策略：当即将开启计分板抽屉时，关闭其他抽屉
+   */
+  const handleOpenScoreboard = React.useCallback((): void => {
+    setIsScoreboardOpen(prev => {
+      const next = !prev;
+      if (next) {
+        // 打开计分板抽屉 -> 关闭其他抽屉
+        setIsQuickRefOpen(false);
+        setIsSettingsOpen(false);
+      }
+      return next;
+    });
   }, []);
 
   const showSettingsButton = (gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory');
+  const showScoreboardButton = (gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory');
 
   return (
     <ErrorBoundary>
@@ -157,8 +200,9 @@ const App: React.FC = memo(() => {
         />
         {/* 顶部栏（吸顶，集成进度条） */}
         <TopBar 
-          title="猜个集博" 
           progress={gameState.gameStatus === 'playing' ? gameProgress : undefined}
+          onOpenScoreboard={showScoreboardButton ? handleOpenScoreboard : undefined}
+          scoreboardOpen={showScoreboardButton ? isScoreboardOpen : false}
           onOpenSettings={showSettingsButton ? handleOpenSettings : undefined}
           settingsOpen={showSettingsButton ? isSettingsOpen : false}
         />
@@ -198,7 +242,17 @@ const App: React.FC = memo(() => {
               console.error('重置失败:', e);
             }
           }}
-          onToggleQuickRef={() => setIsQuickRefOpen(v => !v)}
+          onToggleQuickRef={() => {
+            setIsQuickRefOpen(prev => {
+              const next = !prev;
+              if (next) {
+                // 打开速查表 -> 关闭其他抽屉
+                setIsSettingsOpen(false);
+                setIsScoreboardOpen(false);
+              }
+              return next;
+            });
+          }}
         />
       </div>
     )}
@@ -219,6 +273,13 @@ const App: React.FC = memo(() => {
         onClose={() => setIsSettingsOpen(false)}
         quickRefPosition={quickRefPosition}
         onChangeQuickRefPosition={(pos) => setQuickRefPosition(pos)}
+      />
+    )}
+    {/* 计分板抽屉（TopBar 下方，最上层） */}
+    {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && (
+      <ScoreboardDrawer
+        isOpen={isScoreboardOpen}
+        onClose={() => setIsScoreboardOpen(false)}
       />
     )}
   </div>

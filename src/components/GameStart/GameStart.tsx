@@ -139,7 +139,7 @@ export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoadin
               aria-checked={enableHints}
               aria-label="开启提示"
               onClick={handleToggleHints}
-              className={`relative inline-flex w-8 h-5 rounded-full transition-colors duration-200 focus:outline-none ${enableHints ? 'bg-emerald-500' : 'bg-gray-300'}`}
+              className={`relative inline-flex w-8 h-5 rounded-full transition-colors duration-200 focus:outline-none ${enableHints ? 'bg-[var(--color-primary)]' : 'bg-gray-300'}`}
             >
               <span
                 className={`absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow transition-transform duration-200 ${enableHints ? 'translate-x-3' : 'translate-x-0'}`}

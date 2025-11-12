@@ -334,6 +334,17 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #6b7280;
   }
+
+  /* 移动端：滚动条覆盖显示，不占用布局宽度（防止内容挤压与重排） */
+  @media (max-width: 640px) {
+    .custom-scrollbar {
+      scrollbar-width: none; /* Firefox 移除滚动条宽度 */
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 0; /* WebKit 移除滚动条宽度 */
+      height: 0;
+    }
+  }
   
   /* 渐变背景 */
   .gradient-bg {

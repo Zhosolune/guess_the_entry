@@ -1,42 +1,30 @@
 import React from 'react';
 
-export type QuickRefPosition = 'bottom' | 'left' | 'right';
-
-interface SettingsDrawerProps {
+interface ScoreboardDrawerProps {
   /**
-   * 是否打开设置抽屉
+   * 是否打开计分板抽屉
    */
   isOpen: boolean;
   /**
    * 关闭抽屉的回调
    */
   onClose: () => void;
-  /**
-   * 当前速查表位置设置
-   */
-  quickRefPosition: QuickRefPosition;
-  /**
-   * 更改速查表位置设置
-   */
-  onChangeQuickRefPosition: (pos: QuickRefPosition) => void;
 }
 
 /**
- * 设置抽屉组件（从顶部栏下方向下展开）
+ * 计分板抽屉组件（从顶部栏下方向下展开）
  * - 顶部定位在 TopBar 下方，层级最高
  * - 支持点击遮罩区域关闭
  * - 抽屉底边水平居中放置关闭按钮（X）
  * - 内含设置项：速查表位置（下/左/右），变更后立即回调生效
  */
-const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
+const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
   isOpen,
   onClose,
-  quickRefPosition,
-  onChangeQuickRefPosition,
 }) => {
   /**
    * 处理遮罩点击
-   * 若点击的是遮罩（非抽屉内容），则关闭设置抽屉
+   * 若点击的是遮罩（非抽屉内容），则关闭计分板抽屉
    *
    * @returns void
    */
@@ -53,34 +41,6 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
    */
   const stopPropagation = (e: React.MouseEvent<HTMLDivElement>): void => {
     e.stopPropagation();
-  };
-
-  /**
-   * 渲染速查表位置单选项
-   *
-   * @param label string 选项显示文案
-   * @param value QuickRefPosition 对应枚举值
-   * @returns JSX.Element
-   */
-  const renderOption = (label: string, value: QuickRefPosition): JSX.Element => {
-    const active = quickRefPosition === value;
-    return (
-      <button
-        type="button"
-        onClick={() => onChangeQuickRefPosition(value)}
-        className={`px-3 py-1 rounded-md border border-transparent text-sm transition-colors ${
-          active
-            ? 'bg-[var(--color-primary)] text-white border-transparent'
-            : 'bg-[var(--color-bg-card)] text-[var(--color-text)]  hover:border-[var(--color-primary)]'
-        }`}
-        style={{
-          borderRadius: '0',
-        }}
-        aria-pressed={active}
-      >
-        {label}
-      </button>
-    );
   };
 
   return (
@@ -108,16 +68,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           <div className="max-w-2xl mx-auto px-3 section pb-0 bg-[var(--color-surface)] rounded-none min-h-[calc(15vh)]">
 
             <div className="space-y-4">
-              {/* 速查表位置设置 */}
-              <div>
-                <div className="text-[var(--color-text)] mb-2">速查表位置</div>
-                <div className="flex items-center gap-0">
-                  {renderOption('下', 'bottom')}
-                  {renderOption('左', 'left')}
-                  {renderOption('右', 'right')}
-                </div>
-                <p className="mt-2 text-xs text-[var(--color-text-muted)]">更改后，速查表唤起时将在所选位置显示。</p>
-              </div>
+              计分板占位
             </div>
 
           </div>
@@ -127,8 +78,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               type="button"
               className="hover:text-[var(--color-primary)] focus:outline-none p-2"
               onClick={onClose}
-              aria-label="关闭设置"
-              title="关闭设置"
+              aria-label="关闭计分板"
+              title="关闭计分板"
             >
               <svg className="w-6 h-6" viewBox="0 0 32 32" fill="currentColor">
                 <path d="M16 10l10 10l-1.4 1.4l-8.6-8.6l-8.6 8.6L6 20z" fill="currentColor"></path>
@@ -141,4 +92,4 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   );
 };
 
-export default SettingsDrawer;
+export default ScoreboardDrawer;

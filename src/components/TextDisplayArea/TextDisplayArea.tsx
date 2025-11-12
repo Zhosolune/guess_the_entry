@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useLayoutEffect, useRef } from 'react';
 import { EntryData } from '../../types/game.types';
 
 interface TextDisplayAreaProps {
@@ -126,6 +126,68 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
     });
   }, [newlyRevealed, autoReveal]);
 
+  // 百科内容容器引用，用于应用自适应左右内边距
+  const encyclopediaContainerRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * 计算并应用百科内容容器的自适应左右内边距，使单行能够容纳整数量的字符块（含间距）
+   * 算法：取容器可用宽度、字符块宽度与容器 gap，选择最大可容纳的整数字块列数 k，
+   * 将剩余空间平均分配到左右内边距。
+   *
+   * 参数：无（使用 encyclopediaContainerRef 当前 DOM 引用）
+   * 返回：无（直接设置容器 style.paddingLeft/Right）
+   * 异常：当无法测量（如无子元素 .char-block）时，不抛异常，回退为 0 内边距。
+   */
+  const applyAdaptivePadding = useCallback((): void => {
+    const container = encyclopediaContainerRef.current;
+    if (!container) return;
+
+    // 可用宽度（含内容区，受 box-sizing 影响）。这里选用 clientWidth 更稳妥。
+    const available = container.clientWidth;
+    const style = getComputedStyle(container);
+    const gapPx = parseFloat(style.gap || '0');
+
+    const blockEl = container.querySelector<HTMLElement>('.char-block');
+    const blockWidth = blockEl ? blockEl.getBoundingClientRect().width : 0;
+
+    // 无法测量时，回退为 0 内边距
+    if (available <= 0 || blockWidth <= 0) {
+      container.style.paddingLeft = '0px';
+      container.style.paddingRight = '0px';
+      return;
+    }
+
+    // 计算最大可容纳的整数字块列数 k
+    const k = Math.max(1, Math.floor((available + gapPx) / (blockWidth + gapPx)));
+    const targetContentWidth = k * blockWidth + (k - 1) * gapPx;
+    const padX = Math.max(0, Math.floor((available - targetContentWidth) / 2));
+
+    container.style.paddingLeft = `${padX}px`;
+    container.style.paddingRight = `${padX}px`;
+  }, []);
+
+  // 初始化与尺寸变化时自适应
+  useLayoutEffect(() => {
+    applyAdaptivePadding();
+
+    const container = encyclopediaContainerRef.current;
+    if (!container) return;
+
+    const ro = new ResizeObserver(() => {
+      applyAdaptivePadding();
+    });
+    ro.observe(container);
+
+    const onResize = () => applyAdaptivePadding();
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', onResize);
+    };
+    // 依赖于百科内容长度变化（揭示过程可能影响布局重排）
+  }, [applyAdaptivePadding, encyclopediaContent.length]);
+
   if (isMobileLayout) {
     return (
       <div
@@ -145,8 +207,8 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
                 {renderMaskedContent(entryContent)}
               </div>
 
-              {/* 百科内容 */}
-              <div className="w-full text-base leading-relaxed rounded-lg break-all flex flex-wrap gap-1">
+              {/* 百科内容（自适应左右内边距） */}
+              <div ref={encyclopediaContainerRef} className="w-full text-base leading-relaxed rounded-lg break-all flex flex-wrap gap-1">
                 {renderMaskedContent(encyclopediaContent)}
               </div>
             </div>
@@ -167,8 +229,8 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
               {renderMaskedContent(entryContent)}
             </div>
 
-            {/* 百科内容 */}
-            <div className="w-full text-base leading-relaxed rounded-lg break-all flex flex-wrap gap-1">
+            {/* 百科内容（自适应左右内边距） */}
+            <div ref={encyclopediaContainerRef} className="w-full text-base leading-relaxed rounded-lg break-all flex flex-wrap gap-1">
               {renderMaskedContent(encyclopediaContent)}
             </div>
           </div>

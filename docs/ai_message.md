@@ -1040,3 +1040,38 @@
 - 顶部栏按钮新增 `settingsOpen` 控制：开启时类名固定 `text-[var(--color-primary)]`，关闭时使用 `text-[var(--color-text)] hover:text-[var(--color-primary)]`。
 - 可访问性：按钮增加 `aria-expanded` 与 `aria-pressed` 反映当前状态。
 - App 行为：`handleOpenSettings` 改为切换开关 `setIsSettingsOpen(v => !v)`，并传入 `settingsOpen` 给 TopBar。
+
+#### 2025-11-12 百科内容自适应左右内边距
+- 目标：使百科内容在单行内恰好容纳整数量的字符块（含 `gap`），剩余空间平均分配到左右内边距，避免子像素抖动与不稳定居中。
+- 实现：
+  - TextDisplayArea：为百科内容容器添加 `ref` 与 `useLayoutEffect`，测量容器 `clientWidth`、首个 `.char-block` 的实际宽度与容器 `gap`；计算最大可容纳列数 `k = floor((available+gap)/(block+gap))`；将 `(available - (k*block + (k-1)*gap)) / 2` 分配到 `padding-left/right`。
+  - 自适应：监听容器 `ResizeObserver` 与窗口 `resize`，在内容长度变化时重新计算。
+- 验证：本地预览 `http://localhost:5174/` 正常显示，宽度变化时内边距动态更新，无控制台错误。
+
+#### 2025-11-12 移动端滚动条覆盖显示
+- 问题：移动端自定义滚动条并排占位导致百科内容字符块在滚动时被挤压与重排。
+- 解决：在 `src/index.css` 中针对 `max-width: 640px` 的视口，将 `.custom-scrollbar` 设置为 `scrollbar-width: none`（Firefox），并将 `::-webkit-scrollbar` 的 `width/height` 设为 `0`（WebKit），使滚动条覆盖显示、不占用横向空间。
+- 效果：移动端滚动时内容宽度稳定，配合自适应内边距计算无抖动；本地预览无报错。
+## 2025-11-12 挂载计分板抽屉联动修复
+
+- 背景：用户已添加计分板按钮与 `ScoreboardDrawer.tsx`，但点击后无显示。排查发现 `App.tsx` 未挂载计分板抽屉，导致按钮只切换状态但没有渲染实体。
+- 目标：在 `App.tsx` 中引入并挂载 `ScoreboardDrawer`，与顶部栏按钮状态联动，确保点击可见。
+- 实施：
+  - 在 `App.tsx` 顶部 `import ScoreboardDrawer from './components/ScoreboardDrawer';`
+  - 在游戏进行/胜利条件下渲染：
+    - `isOpen={isScoreboardOpen}` 绑定顶部按钮切换状态
+    - `onClose={() => setIsScoreboardOpen(false)}` 关闭回调
+  - 保持抽屉定位与层级：`top-[var(--topbar-h)]`，`z-[40]`，与 `TopBar z-50` 协同
+- 验证：本地预览 `http://localhost:5175/` 点击计分板按钮抽屉正常显示/隐藏，无浏览器错误；建议检查终端 warnings。
+- 影响：仅 UI 挂载与联动，无变更业务逻辑；与先前自适应 padding 与移动滚动条覆盖策略兼容。
+## 2025-11-12 抽屉互斥逻辑实现
+
+- 背景：存在多个抽屉（设置、计分板、速查表），允许同时开启会造成遮挡与交互不一致。
+- 目标：实现“全局互斥”，任意时刻仅一个抽屉处于打开状态，未来新增抽屉也能遵循该逻辑。
+- 实施：
+  - 在 `App.tsx` 增加 `closeAllDrawers()` 与互斥开关策略：
+    - `handleOpenSettings`/`handleOpenScoreboard`：当即将开启时关闭其他抽屉；再次点击关闭自身。
+    - `onToggleQuickRef`：开启速查表时关闭其他抽屉；再次点击关闭自身。
+  - 保持各抽屉的 `onClose` 不变，维持单独关闭能力。
+- 验证：本地预览 `http://localhost:5175/` 逐一点击三类抽屉，任意开启时自动关闭其他抽屉，逻辑生效，无浏览器错误。
+- 影响：仅交互层互斥逻辑收敛，未更改样式与业务；与此前移动端滚动条覆盖与百科自适应 padding 功能兼容。

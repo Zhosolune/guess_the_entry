@@ -4,13 +4,17 @@ import { useTheme } from '../hooks/useTheme';
 
 interface TopBarProps {
   /**
-   * 顶部栏标题文案
-   */
-  title?: string;
-  /**
    * 游戏进度（0-100），当提供该值时在顶部栏底部显示满屏宽进度条
    */
   progress?: number;
+  /**
+   * 计分板按钮点击回调（可选）；用于打开计分板抽屉或路由
+   */
+  onOpenScoreboard?: () => void;
+  /**
+   * 计分板抽屉是否开启；用于按钮固定主题色与可访问性状态
+   */
+  scoreboardOpen?: boolean;
   /**
    * 设置按钮点击回调（可选）；用于打开设置面板或路由
    */
@@ -27,7 +31,7 @@ interface TopBarProps {
  * - 中间：标题居中显示
  * - 右侧：主题切换按钮（明暗主题）
  */
-export const TopBar: React.FC<TopBarProps> = memo(({ title = '词条猜测游戏', progress, onOpenSettings, settingsOpen }) => {
+export const TopBar: React.FC<TopBarProps> = memo(({ progress, onOpenScoreboard, scoreboardOpen, onOpenSettings, settingsOpen }) => {
   const { isDark, toggleTheme } = useTheme();
   const [showRules, setShowRules] = useState<boolean>(false);
 
@@ -57,6 +61,18 @@ export const TopBar: React.FC<TopBarProps> = memo(({ title = '词条猜测游戏
     }
   };
 
+  /**
+   * 处理计分板按钮点击
+   * 当提供 onOpenScoreboard 回调时触发；否则不进行任何操作
+   *
+   * @returns void
+   */
+  const handleOpenScoreboard = (): void => {
+    if (onOpenScoreboard) {
+      onOpenScoreboard();
+    }
+  };
+  
   // 当有进度时，移除常规底部边框，由进度条承载视觉分隔
   // 移动端要求固定顶部：使用 fixed，确保在滚动时位置不变
   const headerClass = `fixed top-0 left-0 right-0 z-50 bg-[var(--color-surface)] ${progress !== undefined ? '' : 'border-b border-[var(--color-border)]'}`;
@@ -77,6 +93,24 @@ export const TopBar: React.FC<TopBarProps> = memo(({ title = '词条猜测游戏
               <path d="M17 8h-1.5a4.49 4.49 0 0 0-4.5 4.5v.5h2v-.5a2.5 2.5 0 0 1 2.5-2.5H17a2.5 2.5 0 0 1 0 5h-2v4.5h2V17a4.5 4.5 0 0 0 0-9z"></path>
             </svg>
           </button>
+
+          {onOpenScoreboard && (
+            <button
+              onClick={handleOpenScoreboard}
+              className={
+                `inline-flex items-center p-2 focus:outline-none ` +
+                (scoreboardOpen ? 'text-[var(--color-primary)]' : 'text-[var(--color-text)] hover:text-[var(--color-primary)]')
+              }
+              aria-label="计分板"
+              title="计分板"
+              aria-expanded={!!scoreboardOpen}
+              aria-pressed={!!scoreboardOpen}
+            >
+              <svg className="w-6 h-6" viewBox="0 0 32 32" fill="currentColor">
+                <path d="M11 12a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2h-8a1 1 0 0 1-1-1zm1 4a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-8zm-1 6a1 1 0 0 1 1-1h3a1 1 0 1 1 0 2h-3a1 1 0 0 1-1-1zm1-18a1 1 0 1 0-2 0v1H9a3 3 0 0 0-3 3v18a3 3 0 0 0 3 3h9.222a3 3 0 0 0 2.027-.788l4.778-4.38A3 3 0 0 0 26 21.62V8a3 3 0 0 0-3-3h-1V4a1 1 0 1 0-2 0v1h-3V4a1 1 0 1 0-2 0v1h-3V4zM9 7h14a1 1 0 0 1 1 1v13h-4a2.5 2.5 0 0 0-2.5 2.5V27H9a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm10.5 19.185V23.5a.5.5 0 0 1 .5-.5h2.975L19.5 26.185z"></path>
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* 中间居中标题 */}
@@ -99,7 +133,7 @@ export const TopBar: React.FC<TopBarProps> = memo(({ title = '词条猜测游戏
         </div>
 
         {/* 右侧：设置按钮 + 主题切换 */}
-        <div className="justify-self-end flex items-center gap-2">
+        <div className="justify-self-end flex items-center">
           {onOpenSettings && (
             <button
               onClick={handleOpenSettings}

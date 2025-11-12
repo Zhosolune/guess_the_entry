@@ -261,14 +261,14 @@ html.dark .correct-char:hover {
     width: 1.25rem;
     height: 1.25rem;
     line-height: 1.25rem;
-    margin: 0 0.0625rem;
+    margin: 0;
   }
   .masked-char {
     width: 1.25rem;
     height: 1.25rem;
     line-height: 1.25rem;
     font-size: 0.625rem;
-    margin: 0 0.0625rem;
+    margin: 0;
   }
   .auto-revealed-char {
     width: 1.25rem;
