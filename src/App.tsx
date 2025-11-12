@@ -136,8 +136,8 @@ const App: React.FC = memo(() => {
    * 后续可替换为打开设置面板的逻辑
    */
   const handleOpenSettings = React.useCallback((): void => {
-    // 打开设置抽屉
-    setIsSettingsOpen(true);
+    // 切换设置抽屉开关
+    setIsSettingsOpen(v => !v);
   }, []);
 
   const showSettingsButton = (gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory');
@@ -160,6 +160,7 @@ const App: React.FC = memo(() => {
           title="猜个集博" 
           progress={gameState.gameStatus === 'playing' ? gameProgress : undefined}
           onOpenSettings={showSettingsButton ? handleOpenSettings : undefined}
+          settingsOpen={showSettingsButton ? isSettingsOpen : false}
         />
         
         {gameState.gameStatus === 'start' && (

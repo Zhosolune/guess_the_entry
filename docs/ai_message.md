@@ -1025,8 +1025,9 @@
 - App 集成：新增 `isSettingsOpen` 与 `quickRefPosition`（bottom/left/right），设置按钮（TopBar）点击打开抽屉，切换速查表位置后立即生效。
 - QuickRefDrawer 扩展：根据 `position` 切换定位与动画：
   - `bottom`：`fixed bottom-0 inset-x-0` + `translate-y` 动画，保留 `mb-[var(--bottombar-h)]`；
-  - `left`：`fixed inset-y-0 left-0` + `-translate-x` 动画，宽度 `w-[86vw] md:w-[420px]`，`h-full`；
-  - `right`：`fixed inset-y-0 right-0` + `translate-x` 动画，宽度同上，`h-full`。
+  - `left`：`fixed left-0 top-[calc(var(--topbar-h)+4px)] bottom-0` + `-translate-x` 动画，宽度 `w-[86vw] md:w-[420px]`，`h-full`；内侧加右边框 `border-r`。
+  - `right`：`fixed right-0 top-[calc(var(--topbar-h)+4px)] bottom-0` + `translate-x` 动画，宽度同上，`h-full`；内侧加左边框 `border-l`。
+  - 内容布局：`left/right` 采用纵向堆叠（`flex flex-col gap-4`），`bottom` 保持双列栅格（`grid grid-cols-1 md:grid-cols-2`）。
 - 预览验证：设置面板展开/关闭正常，速查表位置切换即时生效；浏览器无报错。
 
 #### 追加调整：层级、宽度、圆角与动画
@@ -1034,3 +1035,8 @@
 - 设置抽屉宽度：容器改为 `w-full`，去掉 `max-w-4xl` 限制。
 - 圆角：设置面板卡片添加 `rounded-none`，去除圆角。
 - 速查表位置动画：在 `QuickRefDrawer` 中比较 `prevPosition` 与当前 `position`，位置变更时不添加 `transition-transform`，仅在开/关时保留动画。
+
+#### 追加调整：设置按钮开关与高亮
+- 顶部栏按钮新增 `settingsOpen` 控制：开启时类名固定 `text-[var(--color-primary)]`，关闭时使用 `text-[var(--color-text)] hover:text-[var(--color-primary)]`。
+- 可访问性：按钮增加 `aria-expanded` 与 `aria-pressed` 反映当前状态。
+- App 行为：`handleOpenSettings` 改为切换开关 `setIsSettingsOpen(v => !v)`，并传入 `settingsOpen` 给 TopBar。

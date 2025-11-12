@@ -86,13 +86,13 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   return (
     <>
       {/* 遮罩：点击关闭，仅在打开时渲染 */}
-      {isOpen && (
+      {/* {isOpen && (
         <div
           className="fixed inset-0 z-[30] bg-black/30"
           onClick={handleBackdropClick}
           aria-hidden="true"
         />
-      )}
+      )} */}
 
       {/* 抽屉本体：位于 TopBar 下方，滑动进入 */}
       <div
@@ -104,8 +104,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         aria-label="设置面板"
         onClick={stopPropagation}
       >
-        <div className="w-full bg-[var(--color-surface)]">
-          <div className="max-w-2xl mx-auto px-3 section bg-[var(--color-surface)] rounded-none">
+        <div className="w-full bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+          <div className="max-w-2xl mx-auto px-3 section pb-1 bg-[var(--color-surface)] rounded-none">
 
             <div className="space-y-4">
               {/* 速查表位置设置 */}
@@ -124,14 +124,13 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <div className="mt-4 flex justify-center">
               <button
                 type="button"
-                className="btn-flat"
+                className="hover:text-[var(--color-primary)] focus:outline-none p-2"
                 onClick={onClose}
                 aria-label="关闭设置"
                 title="关闭设置"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M18 6L6 18" />
-                  <path d="M6 6l12 12" />
+                <svg className="w-5 h-5" viewBox="0 0 32 32" fill="currentColor">
+                  <path d="M16 10l10 10l-1.4 1.4l-8.6-8.6l-8.6 8.6L6 20z" fill="currentColor"></path>
                 </svg>
               </button>
             </div>

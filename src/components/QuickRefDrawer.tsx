@@ -80,10 +80,12 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
     const samePosition = prevPositionRef.current === position;
     const transition = samePosition ? 'transition-transform duration-200' : '';
     if (position === 'left') {
-      return `fixed inset-y-0 left-0 z-40 transform ${transition} ${isOpen ? 'translate-x-0' : '-translate-x-full'}`;
+      // 侧边抽屉需避让顶部栏高度，并额外留出 4px 间距
+      return `fixed left-0 top-[calc(var(--topbar-h)+4px)] bottom-0 z-40 transform ${transition} ${isOpen ? 'translate-x-0' : '-translate-x-full'}`;
     }
     if (position === 'right') {
-      return `fixed inset-y-0 right-0 z-40 transform ${transition} ${isOpen ? 'translate-x-0' : 'translate-x-full'}`;
+      // 侧边抽屉需避让顶部栏高度，并额外留出 4px 间距
+      return `fixed right-0 top-[calc(var(--topbar-h)+4px)] bottom-0 z-40 transform ${transition} ${isOpen ? 'translate-x-0' : 'translate-x-full'}`;
     }
     // default bottom
     return `fixed bottom-0 inset-x-0 z-40 transform ${transition} ${isOpen ? 'translate-y-0' : 'translate-y-full'}`;
@@ -97,7 +99,9 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
    */
   const innerClass = React.useMemo<string>(() => {
     if (position === 'left' || position === 'right') {
-      return 'bg-[var(--color-surface)] border-[var(--color-border)] h-full w-[86vw] md:w-[420px]';
+      // 侧边：仅在内侧添加边框（右侧加左边框；左侧加右边框）
+      const sideBorder = position === 'right' ? 'border-l' : 'border-r';
+      return `bg-[var(--color-surface)] ${sideBorder} border-[var(--color-border)] h-full w-[86vw] md:w-[420px]`;
     }
     return 'bg-[var(--color-surface)] border-t border-[var(--color-border)] mb-[var(--bottombar-h)]';
   }, [position]);
@@ -122,7 +126,7 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
       {/* 样式说明：抽屉背景不透明以提升可读性 */}
       <div className={innerClass}>
         <div className="flex items-center justify-between px-4 py-2">
-          <h2 className="text-sm font-medium text-[var(--color-text)]">速查表</h2>
+          <div className="text-sm text-[var(--color-text)]">速查表</div>
           <button
             type="button"
             aria-label="关闭速查表"
@@ -130,7 +134,7 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
             onClick={handleCloseClick}
             className="inline-flex items-center p-2 text-[var(--color-text)] hover:text-[var(--color-primary)] focus:outline-none"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M18 6L6 18" />
               <path d="M6 6l12 12" />
             </svg>
@@ -139,10 +143,19 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
 
         {/* 内容区：滚动容器 */}
         <div className={scrollClass}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Graveyard graveyard={graveyard} />
-            <CorrectPanel guessedChars={guessedChars} />
-          </div>
+          {position === 'left' || position === 'right' ? (
+            // 左右侧：改为纵向排列，便于窄宽侧栏阅读
+            <div className="flex flex-col gap-4 px-2">
+              <Graveyard graveyard={graveyard} />
+              <CorrectPanel guessedChars={guessedChars} />
+            </div>
+          ) : (
+            // 底部：保持原横向并排布局
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Graveyard graveyard={graveyard} />
+              <CorrectPanel guessedChars={guessedChars} />
+            </div>
+          )}
         </div>
       </div>
     </div>
