@@ -133,13 +133,13 @@ const App: React.FC = memo(() => {
         />
         {/* 顶部栏（吸顶，集成进度条） */}
         <TopBar 
-          title="词条猜测游戏" 
+          title="猜个集博" 
           progress={gameState.gameStatus === 'playing' ? gameProgress : undefined}
           onOpenSettings={showSettingsButton ? handleOpenSettings : undefined}
         />
         
         {gameState.gameStatus === 'start' && (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center justify-center mt-[calc(var(--topbar-h))]">
             <GameStart 
               onStartGame={handleStartGame}
               isLoading={gameState.isLoading}
