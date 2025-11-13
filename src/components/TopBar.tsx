@@ -81,6 +81,7 @@ export const TopBar: React.FC<TopBarProps> = memo(({ progress, onOpenGameInfo, g
   
   // 当有进度时，移除常规底部边框，由进度条承载视觉分隔
   // 移动端要求固定顶部：使用 fixed，确保在滚动时位置不变
+  const anyDrawerOpen = !!(gameInfoOpen || scoreboardOpen || settingsOpen);
   const headerClass = `fixed top-0 left-0 right-0 z-50 bg-[var(--color-surface)] ${progress !== undefined ? '' : 'border-b border-[var(--color-border)]'}`;
 
   return (

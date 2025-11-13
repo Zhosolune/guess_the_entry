@@ -46,10 +46,17 @@ const GameInfoDrawer: React.FC<GameInfoDrawerProps> = ({
 
   return (
     <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[45] bg-transparent"
+          onClick={handleBackdropClick}
+          aria-hidden="true"
+        />
+      )}
 
       {/* 抽屉本体：位于 TopBar 下方，滑动进入 */}
       <div
-        className={`fixed top-[var(--topbar-h)] left-0 right-0 z-[40] transform transition-transform duration-200 ${
+        className={`fixed top-[var(--topbar-h)] left-0 right-0 z-[48] transform transition-transform duration-200 ${
           isOpen ? 'translate-y-0' : '-translate-y-full'
         }`}
         role="dialog"
