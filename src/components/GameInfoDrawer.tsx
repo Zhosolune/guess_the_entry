@@ -69,10 +69,10 @@ const GameInfoDrawer: React.FC<GameInfoDrawerProps> = ({
 
             <div className="text-xl font-semi text-[var(--color-text)] pb-3">游戏规则</div>
             <div className="space-y-2 text-[var(--color-text-muted)]">
-                  <p>1、选择一个你感兴趣的领域，系统将随机生成一个词条</p>
-                  <p>2、输入单个汉字进行猜测，正确的字符会显示出来</p>
-                  <p>3、猜错的字符会被添加到“坟场”区域</p>
-                  <p>4、完全揭示词条内容即可获胜！</p>
+              <p>1、选择一个你感兴趣的领域，系统将随机生成一个词条</p>
+              <p>2、输入单个汉字进行猜测，正确的字符会显示出来</p>
+              <p>3、猜错的字符会被添加到“坟场”区域</p>
+              <p>4、完全揭示词条内容即可获胜！</p>
             </div>
 
           </div>

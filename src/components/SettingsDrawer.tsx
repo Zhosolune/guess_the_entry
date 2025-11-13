@@ -103,9 +103,10 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         onClick={stopPropagation}
       >
         <div className="w-full bg-[var(--color-surface)] border-b border-[var(--color-border)]">
-          <div className="max-w-2xl mx-auto px-3 section pb-0 bg-[var(--color-surface)] rounded-none min-h-[calc(15vh)]">
+          <div className="max-w-2xl mx-auto p-4 pb-0 bg-[var(--color-surface)] rounded-none min-h-[calc(15vh)]">
 
-            <div className="space-y-4">
+            <div className="text-xl font-semi text-[var(--color-text)] pb-3">设置</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* 速查表位置设置 */}
               <div>
                 <div className="text-[var(--color-text)] mb-2">速查表位置</div>
