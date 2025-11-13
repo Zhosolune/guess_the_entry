@@ -107,7 +107,6 @@
   /* 统一标题样式（保留图标与功能标识） */
   .section-title {
     color: var(--color-text);
-    font-weight: 600;
   }
   .section-subtitle {
     color: var(--color-text-muted);

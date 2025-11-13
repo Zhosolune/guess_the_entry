@@ -119,11 +119,11 @@ export const Graveyard: React.FC<GraveyardProps> = memo(({ graveyard }) => {
 
   if (graveyard.length === 0) {
     return (
-      <div className="card-flat section text-center sm:mb-0 mx-4">
+      <div className="card-flat p-4 text-center sm:mb-0 mx-4">
         <div className="flex items-center justify-center mb-4">
           <Skull className="w-8 h-8 text-[var(--color-text-muted)]" />
         </div>
-        <h3 className="text-lg font-semibold text-[var(--color-text-muted)] mb-2">坟场</h3>
+        <h3 className="text-lg font-semi text-[var(--color-text-muted)] mb-2">坟场</h3>
         <p className="text-[var(--color-text-muted)] text-sm">
           还没有猜错的字符
         </p>
@@ -132,7 +132,7 @@ export const Graveyard: React.FC<GraveyardProps> = memo(({ graveyard }) => {
   }
 
   return (
-    <div className="card-flat section sm:mb-0 mx-4">
+    <div className="card-flat p-4 sm:mb-0 mx-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg section-title flex items-center">
           <Skull className="w-5 h-5 mr-2 text-red-500" />

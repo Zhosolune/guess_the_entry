@@ -103,7 +103,7 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
       const sideBorder = position === 'right' ? 'border-l' : 'border-r';
       return `bg-[var(--color-surface)] ${sideBorder} border-[var(--color-border)] h-full w-[86vw] md:w-[420px]`;
     }
-    return 'bg-[var(--color-surface)] border-t border-[var(--color-border)] mb-[var(--bottombar-h)]';
+    return 'px-2 bg-[var(--color-surface)] border-t border-[var(--color-border)] mb-[var(--bottombar-h)] pb-2';
   }, [position]);
 
   /**
@@ -114,7 +114,7 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
     if (position === 'left' || position === 'right') {
       return 'h-full overflow-y-auto py-2';
     }
-    return 'max-h-[80vh] md:max-h-[88vh] overflow-y-auto py-2';
+    return 'max-h-[50vh] md:max-h-[50vh] overflow-y-auto';
   }, [position]);
   return (
     <div
@@ -125,8 +125,8 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
     >
       {/* 样式说明：抽屉背景不透明以提升可读性 */}
       <div className={innerClass}>
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="text-[var(--color-text)]">速查表</div>
+        <div className="flex items-center justify-between py-2 mx-4">
+          <div className="text-xl font-semi text-[var(--color-text)]">速查表</div>
           <button
             type="button"
             aria-label="关闭速查表"
@@ -145,7 +145,7 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
         <div className={scrollClass}>
           {position === 'left' || position === 'right' ? (
             // 左右侧：改为纵向排列，便于窄宽侧栏阅读
-            <div className="flex flex-col gap-4 px-2">
+            <div className="flex flex-col gap-4">
               <Graveyard graveyard={graveyard} />
               <CorrectPanel guessedChars={guessedChars} />
             </div>

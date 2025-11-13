@@ -144,22 +144,22 @@ export const CorrectPanel: React.FC<CorrectPanelProps> = ({ guessedChars }) => {
    */
   if (correctList.length === 0) {
     return (
-      <div className="card-flat section text-center sm:mb-0 mx-4">
+      <div className="card-flat p-4 text-center sm:mb-0 mx-4">
         <div className="flex items-center justify-center mb-4">
           <CheckCircle className="w-8 h-8 text-[var(--color-text-muted)]" />
         </div>
-        <h3 className="text-lg font-semibold text-[var(--color-text-muted)] mb-2">已猜对字符</h3>
+        <h3 className="text-lg font-semibold text-[var(--color-text-muted)] mb-2">集博</h3>
         <p className="text-[var(--color-text-muted)] text-sm">还没有猜对的字符</p>
       </div>
     );
   }
 
   return (
-    <div className="card-flat section mx-4">
+    <div className="card-flat p-4 sm:mb-0 mx-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CheckCircle className="w-5 h-5 text-emerald-600" />
-          <h3 className="text-lg section-title">已猜对字符</h3>
+          <h3 className="text-lg section-title">集博</h3>
         </div>
         <button
           type="button"
