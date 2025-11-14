@@ -112,7 +112,7 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
    */
   const scrollClass = React.useMemo<string>(() => {
     if (position === 'left' || position === 'right') {
-      return 'h-full overflow-y-auto py-2';
+      return 'h-full overflow-y-hidden py-2';
     }
     return 'max-h-[50vh] md:max-h-[50vh] overflow-y-auto';
   }, [position]);
@@ -144,10 +144,14 @@ export const QuickRefDrawer: React.FC<QuickRefDrawerProps> = ({ isOpen, onClose,
         {/* 内容区：滚动容器 */}
         <div className={scrollClass}>
           {position === 'left' || position === 'right' ? (
-            // 左右侧：改为纵向排列，便于窄宽侧栏阅读
+            // 左右侧：改为纵向排列，并为每块设置独立滚动容器
             <div className="flex flex-col gap-4">
-              <Graveyard graveyard={graveyard} />
-              <CorrectPanel guessedChars={guessedChars} />
+              <div className="max-h-[40vh] md:max-h-[45vh] overflow-y-auto overscroll-contain">
+                <Graveyard graveyard={graveyard} />
+              </div>
+              <div className="max-h-[40vh] md:max-h-[45vh] overflow-y-auto overscroll-contain">
+                <CorrectPanel guessedChars={guessedChars} />
+              </div>
             </div>
           ) : (
             // 底部：保持原横向并排布局
