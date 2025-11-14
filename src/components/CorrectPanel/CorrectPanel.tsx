@@ -147,7 +147,7 @@ export const CorrectPanel: React.FC<CorrectPanelProps> = ({ guessedChars }) => {
         <div className="flex items-center justify-center mb-4">
           <CheckCircle className="w-8 h-8 text-[var(--color-text-muted)]" />
         </div>
-        <h3 className="text-lg font-semibold text-[var(--color-text-muted)] mb-2">集博</h3>
+        <h3 className="text-lg font-semi text-[var(--color-text-muted)] mb-2">集博</h3>
         <p className="text-[var(--color-text-muted)] text-sm">还没有猜对的字符</p>
       </div>
     );
