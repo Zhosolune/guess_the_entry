@@ -15,6 +15,7 @@ interface GameLayoutProps {
   entryData: EntryData;
   guessedChars: Set<string>;
   revealedChars: Set<string>;
+  graveyard: string[];
   attempts: number;
   onGuess: (char: string) => void;
   isLoading: boolean;
@@ -38,6 +39,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   entryData,
   guessedChars,
   revealedChars,
+  graveyard,
   attempts,
   onGuess,
   isLoading,
@@ -56,6 +58,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   const [hintPreview, setHintPreview] = useState<Hint | null>(null);
   /** 提示流程激活态（用于按钮固定主题色显示） */
   const [hintActive, setHintActive] = useState<boolean>(false);
+  const [overlayVisible, setOverlayVisible] = useState<boolean>(false);
 
   // 格式化时间显示
   const formattedTime = useMemo(() => {
@@ -100,7 +103,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
     }
 
     // 检查是否已经猜过
-    if (guessedChars.has(char)) {
+    if (guessedChars.has(char) || graveyard.includes(char)) {
       toast.info(`已经猜过"${char}"了`);
       setInputValue('');
       return;
@@ -127,6 +130,14 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
 
   // 使用键盘Hook
   useKeyboard(handleKeyboardInput);
+
+  React.useEffect(() => {
+    if (gameStatus === 'victory') {
+      setOverlayVisible(true);
+    } else {
+      setOverlayVisible(false);
+    }
+  }, [gameStatus]);
 
   /**
    * 处理提示按钮点击
@@ -204,16 +215,21 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         gameProgress={gameProgress}
       />
 
-      {/* 胜利状态显示 */}
+      {/* 胜利状态：在原搜索栏区域显示操作按钮 */}
       {gameStatus === 'victory' && (
-        <div className="px-4 py-3 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+        <div className="fixed left-0 right-0 top-[calc(var(--topbar-h)+var(--infobar-h))] z-30 px-4 pt-3 bg-[var(--color-surface)] h-[var(--searchbar-h)]">
           <div className="container mx-auto max-w-4xl">
-            <div className="card-flat section p-4 text-center">
-              <div className="text-2xl">恭喜通关！</div>
-              <div className="text-[var(--color-text-muted)]">用时 {formattedTime}，尝试 {attempts} 次</div>
+            <div className="flex gap-3 items-center">
               <button
                 type="button"
-                className="btn-primary mt-3"
+                className="btn-secondary btn-compact-mobile"
+                onClick={() => setOverlayVisible(true)}
+              >
+                显示遮罩
+              </button>
+              <button
+                type="button"
+                className="btn-primary btn-compact-mobile"
                 onClick={() => onRestart && onRestart()}
               >
                 再来一局
@@ -239,7 +255,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         entryData={entryData}
         revealedChars={revealedChars}
         newlyRevealed={newlyRevealed}
-        autoReveal={gameStatus === 'victory'}
+        autoReveal={false}
         isMobileLayout={isMobile}
       />
 
@@ -253,6 +269,25 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         quickRefOpen={quickRefOpen}
         hintActive={hintActive}
       />
+      {overlayVisible && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="card-flat section p-6 text-center bg-[var(--color-surface)]">
+              <div className="text-4xl mb-2 animate-bounce">🎉</div>
+              <div className="text-2xl mb-2">恭喜通关！</div>
+              <div className="text-[var(--color-text-muted)] mb-4">用时 {formattedTime}，尝试 {attempts} 次，进度 {gameProgress}%</div>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => setOverlayVisible(false)}
+              >
+                确认
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Container>
   );
 });

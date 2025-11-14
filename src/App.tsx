@@ -242,15 +242,16 @@ const App: React.FC = memo(() => {
 
         {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && gameState.currentEntry && (
           <div className="flex-1 flex flex-col overflow-hidden">
-            <GameLayout
-              entryData={gameState.currentEntry}
-              guessedChars={gameState.guessedChars}
-              revealedChars={gameState.revealedChars}
-              attempts={gameState.attempts}
-              onGuess={handleGameGuess}
-              isLoading={gameState.isLoading}
-              error={gameState.error}
-              gameTime={gameState.gameStatus === 'victory' && finalSeconds !== null ? finalSeconds : time}
+          <GameLayout
+            entryData={gameState.currentEntry}
+            guessedChars={gameState.guessedChars}
+            revealedChars={gameState.revealedChars}
+            graveyard={gameState.graveyard}
+            attempts={gameState.attempts}
+            onGuess={handleGameGuess}
+            isLoading={gameState.isLoading}
+            error={gameState.error}
+            gameTime={gameState.gameStatus === 'victory' && finalSeconds !== null ? finalSeconds : time}
               gameStatus={gameState.gameStatus}
               hintsEnabled={hintsEnabled}
               quickRefOpen={isQuickRefOpen}
