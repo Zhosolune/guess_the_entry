@@ -133,9 +133,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   useKeyboard(handleKeyboardInput);
 
   React.useEffect(() => {
-    if (gameStatus === 'victory') {
-      setOverlayVisible(true);
-    } else {
+    if (gameStatus !== 'victory') {
       setOverlayVisible(false);
     }
   }, [gameStatus]);
@@ -220,21 +218,25 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
       {gameStatus === 'victory' && (
         <div className="fixed left-0 right-0 top-[calc(var(--topbar-h)+var(--infobar-h))] z-30 px-4 pt-3 bg-[var(--color-surface)] h-[var(--searchbar-h)]">
           <div className="container mx-auto max-w-4xl">
-            <div className="flex gap-3 items-center">
-              <button
-                type="button"
-                className="btn-secondary btn-compact-mobile"
-                onClick={() => setOverlayVisible(true)}
-              >
-                显示遮罩
-              </button>
-              <button
-                type="button"
-                className="btn-primary btn-compact-mobile"
-                onClick={() => onRestart && onRestart()}
-              >
-                再来一局
-              </button>
+            <div className="text-center">
+              <div className="text-emerald-600 text-lg font-semibold">恭喜通关！</div>
+              <div className="text-[var(--color-text)] mt-1">可以选择查看词条内容或再来一局</div>
+              <div className="mt-3 flex justify-center gap-3">
+                <button
+                  type="button"
+                  className="btn-primary btn-compact-mobile"
+                  onClick={() => setOverlayVisible(v => !v)}
+                >
+                  {overlayVisible ? '隐藏遮罩' : '显示遮罩'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary btn-compact-mobile"
+                  onClick={() => onRestart && onRestart()}
+                >
+                  再来一局
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -256,7 +258,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         entryData={entryData}
         revealedChars={revealedChars}
         newlyRevealed={newlyRevealed}
-        autoReveal={false}
+        autoReveal={overlayVisible}
         isMobileLayout={isMobile}
       />
 
@@ -270,25 +272,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         quickRefOpen={quickRefOpen}
         hintActive={hintActive}
       />
-      {overlayVisible && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/50" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="card-flat section p-6 text-center bg-[var(--color-surface)]">
-              <div className="text-4xl mb-2 animate-bounce">🎉</div>
-              <div className="text-2xl mb-2">恭喜通关！</div>
-              <div className="text-[var(--color-text-muted)] mb-4">用时 {formattedTime}，尝试 {attempts} 次，进度 {gameProgress}%</div>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => setOverlayVisible(false)}
-              >
-                确认
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </Container>
   );
 });
