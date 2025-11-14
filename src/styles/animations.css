@@ -130,6 +130,89 @@ html.dark .correct-char {
   background: var(--color-surface);
 }
 
+/* 坟场分组布局样式 */
+.graveyard-scroll {
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+.graveyard-group {
+  padding-top: 0.5rem;
+  /* 分区与内容间距 */
+}
+
+.graveyard-group:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.graveyard-group-label {
+  position: sticky;
+  /* 标签固定显示 */
+  top: 0;
+  background: var(--color-surface);
+  backdrop-filter: blur(2px);
+  font-size: 0.8rem;
+  /* 标签小字号 */
+  font-weight: 200;
+  color: var(--color-text-muted);
+  margin-bottom: 0.2rem;
+  /* 标签与内容间距 */
+  margin-top: 0.2rem;
+  /* 标签与内容间距 */
+}
+
+.graveyard-group-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  /* 分组内字块间距 */
+}
+
+/* 坟场行内流布局：分组标签 + 字块连续排列，排满后自动换行 */
+.graveyard-stream {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  /* 标签与字块之间的紧凑间距 */
+}
+
+.graveyard-group-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  /* 与字块等宽 */
+  height: 1.5rem;
+  /* 与字块等高 */
+  padding: 0;
+  /* 统一尺寸，去除额外内边距 */
+  border-radius: 0.2rem;
+  /* 与字块圆角一致 */
+  backdrop-filter: blur(2px);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  /* 稍小字号以区分标签 */
+  font-weight: 500;
+  transition: opacity 0.18s ease, transform 0.18s ease, background-color 0.18s ease;
+  animation: chipFadeIn 0.18s ease;
+  box-sizing: border-box;
+  /* 保证与字块尺寸一致 */
+}
+
+/* 标签显隐状态下的微动效（可选类） */
+/* 默认隐藏但保留占位，保证显隐切换时整体布局不抖动 */
+.graveyard-stream .graveyard-group-chip {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.graveyard-stream.labels-visible .graveyard-group-chip {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* 成功横幅样式 */
 .success-banner {
   display: flex;
@@ -268,83 +351,22 @@ html.dark .correct-char {
     height: 1.25rem;
     font-size: 0.875rem;
   }
+
+  .graveyard-group-chip {
+    width: 1.25rem;
+    /* 与字块等宽 */
+    height: 1.25rem;
+    /* 与字块等高 */
+    font-size: 0.85rem;
+  }
 }
 
-/* 坟场分组布局样式 */
-.graveyard-scroll {
-  max-height: 18rem;
-  overflow-y: auto;
-}
-
-.graveyard-group {
-  padding-top: 0.5rem; /* 分区与内容间距 */
-}
-
-.graveyard-group:first-child {
-  border-top: none;
-  padding-top: 0;
-}
-
-.graveyard-group-label {
-  position: sticky; /* 标签固定显示 */
-  top: 0;
-  background: var(--color-surface);
-  backdrop-filter: blur(2px);
-  font-size: 0.8rem; /* 标签小字号 */
-  font-weight: 200;
-  color: var(--color-text-muted);
-  margin-bottom: 0.2rem; /* 标签与内容间距 */
-  margin-top: 0.2rem; /* 标签与内容间距 */
-}
-
-.graveyard-group-content {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem; /* 分组内字块间距 */
-}
-
-/* 坟场行内流布局：分组标签 + 字块连续排列，排满后自动换行 */
-.graveyard-stream {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem; /* 标签与字块之间的紧凑间距 */
-}
-
-.graveyard-group-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem; /* 与字块等宽 */
-  height: 1.5rem; /* 与字块等高 */
-  padding: 0; /* 统一尺寸，去除额外内边距 */
-  border-radius: 0.2rem; /* 与字块圆角一致 */
-  backdrop-filter: blur(2px);
-  color: var(--color-text-muted);
-  font-size: 0.85rem; /* 稍小字号以区分标签 */
-  font-weight: 500;
-  transition: opacity 0.18s ease, transform 0.18s ease, background-color 0.18s ease;
-  animation: chipFadeIn 0.18s ease;
-  box-sizing: border-box; /* 保证与字块尺寸一致 */
-}
 
 @keyframes chipFadeIn {
   from { opacity: 0; transform: translateY(-2px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-
-/* 标签显隐状态下的微动效（可选类） */
-/* 默认隐藏但保留占位，保证显隐切换时整体布局不抖动 */
-.graveyard-stream .graveyard-group-chip {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.graveyard-stream.labels-visible .graveyard-group-chip {
-  opacity: 1;
-  visibility: visible;
-}
 
 /* 坟场首字母标签切换图标按钮 */
 .graveyard-icon-btn {
