@@ -10,6 +10,8 @@ export interface PersistedStatsItem {
   timeSpent?: number;
   attempts?: number;
   percent?: number;
+  hintCount?: number;
+  perfect?: boolean;
 }
 
 export interface UserSettings {
@@ -330,6 +332,8 @@ interface SerializedGameState {
   guessedChars: string[];
   graveyard: string[];
   attempts: number;
+  hintCount: number;
+  hintUsed: boolean;
   startTime: number;
   isLoading: boolean;
   error: string | null;
@@ -345,6 +349,8 @@ function serializeGameState(s: GameState): SerializedGameState {
     guessedChars: Array.from(s.guessedChars),
     graveyard: [...s.graveyard],
     attempts: s.attempts,
+    hintCount: s.hintCount,
+    hintUsed: s.hintUsed,
     startTime: s.startTime,
     isLoading: s.isLoading,
     error: s.error
@@ -361,6 +367,8 @@ function deserializeGameState(s: SerializedGameState): GameState {
     guessedChars: new Set(s.guessedChars ?? []),
     graveyard: Array.isArray(s.graveyard) ? s.graveyard : [],
     attempts: s.attempts ?? 0,
+    hintCount: s.hintCount ?? 0,
+    hintUsed: !!s.hintUsed,
     startTime: s.startTime ?? Date.now(),
     isLoading: !!s.isLoading,
     error: s.error ?? null
@@ -441,13 +449,13 @@ export async function getExcludedEntries(): Promise<string[]> {
 /**
  * 在胜利后更新统计信息
  */
-export async function updateGameStats(input: { gameId: string; timeSpent: number; attempts: number; percent?: number }): Promise<void> {
+export async function updateGameStats(input: { gameId: string; timeSpent: number; attempts: number; percent?: number; hintCount?: number; perfect?: boolean }): Promise<void> {
   const state = await initState();
   state.stats.totalGames += 1;
   state.stats.totalSuccess += 1;
   state.stats.gameTime.push({ gameId: input.gameId, timeSpent: input.timeSpent });
   state.stats.attempts.push({ gameId: input.gameId, attempts: input.attempts });
-  state.stats.completionPercent.push({ gameId: input.gameId, percent: input.percent ?? 100 });
+  state.stats.completionPercent.push({ gameId: input.gameId, percent: input.percent ?? 100, hintCount: input.hintCount, perfect: input.perfect });
   state.timestamp = Date.now();
   const contentStr = JSON.stringify(buildContent(state));
   state.integrity.checksum = await sha256(contentStr);

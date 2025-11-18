@@ -26,6 +26,8 @@ interface TextDisplayAreaProps {
    * 游戏状态
    */
   gameStatus: GameStatus;
+  hintSelectMode?: boolean;
+  onHintSelect?: (char: string) => void;
 }
 
 /**
@@ -40,6 +42,8 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
   autoReveal,
   isMobileLayout = true,
   gameStatus,
+  hintSelectMode = false,
+  onHintSelect,
 }) => {
   /**
    * 判断是否为标点符号（中英文）
@@ -49,8 +53,7 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
    * @returns 是否为标点符号
    */
   const isPunctuation = useCallback((char: string): boolean => {
-    const regex = /[，。！？、；：“”‘’（）《》〈〉【】—…·.,;:!?"(){\}\[\]<>\-]/;
-    return regex.test(char);
+    return /[\p{P}\p{S}]/u.test(char);
   }, []);
 
   // 格式化词条和百科内容
@@ -121,15 +124,20 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
         );
       }
 
-      return (
-        <span
-          key={item.key}
-          className={`${base} masked-char`}
-          aria-hidden={true}
-        />
-      );
+      if (hintSelectMode && onHintSelect) {
+        return (
+          <button
+            key={item.key}
+            type="button"
+            className={`${base} masked-char hint-selectable hint-breathe cursor-pointer`}
+            onClick={() => onHintSelect(item.char)}
+            aria-label={`揭示${item.char}`}
+          />
+        );
+      }
+      return <span key={item.key} className={`${base} masked-char`} aria-hidden={true} />;
     });
-  }, [newlyRevealed, autoReveal]);
+  }, [newlyRevealed, autoReveal, hintSelectMode, onHintSelect]);
 
   // 百科内容容器引用，用于应用自适应左右内边距
   const encyclopediaContainerRef = useRef<HTMLDivElement | null>(null);

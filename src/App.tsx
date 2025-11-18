@@ -23,6 +23,7 @@ const App: React.FC = memo(() => {
     gameState,
     initializeGame,
     handleGuess,
+    handleHintSelectChar,
     resetGame,
     clearError,
     loadSavedGame
@@ -105,6 +106,18 @@ const App: React.FC = memo(() => {
     }
   }, [clearError, handleGuess]);
 
+  const handleHintSelect = useCallback(async (char: string) => {
+    try {
+      clearError();
+      await handleHintSelectChar(char);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : '';
+      if (msg.includes('请输入有效的中文字符')) {
+        toast.info('请输入中文字符');
+      }
+    }
+  }, [clearError, handleHintSelectChar]);
+
   /**
    * 计算游戏进度（不统计标点符号）
    * 基于“位置”统计：仅对非标点字符计算总数与揭示数。
@@ -112,7 +125,7 @@ const App: React.FC = memo(() => {
    */
   const gameProgress = useMemo(() => {
     if (!gameState.currentEntry) return 0;
-    const isPunctuation = (char: string): boolean => /[，。！？、；：“”‘’（）《》〈〉【】—…·.,;:!?'"(){}\[\]<>\-]/.test(char);
+    const isPunctuation = (char: string): boolean => /[\p{P}\p{S}]/u.test(char);
 
     const { entry, encyclopedia } = gameState.currentEntry;
     const entryChars = entry.split('');
@@ -128,7 +141,8 @@ const App: React.FC = memo(() => {
   /**
    * 格式化时间显示
    */
-  const formattedTime = useMemo(() => {
+  // 保留格式化函数以供后续扩展（当前未直接渲染）
+  const getFormattedTime = useCallback(() => {
     const secondsToShow = gameState.gameStatus === 'victory' && finalSeconds !== null ? finalSeconds : time;
     return formatTime(secondsToShow);
   }, [time, finalSeconds, formatTime, gameState.gameStatus]);
@@ -197,12 +211,13 @@ const App: React.FC = memo(() => {
    *
    * @returns void
    */
-  const closeAllDrawers = React.useCallback((): void => {
-    setIsSettingsOpen(false);
-    setIsScoreboardOpen(false);
-    setIsGameInfoOpen(false);
-    setUIPanels({ settingsOpen: false, scoreboardOpen: false, gameInfoOpen: false }).catch(() => {});
-  }, []);
+  // 全局抽屉关闭函数（如需在其它地方调用可启用）
+  // const closeAllDrawers = React.useCallback((): void => {
+  //   setIsSettingsOpen(false);
+  //   setIsScoreboardOpen(false);
+  //   setIsGameInfoOpen(false);
+  //   setUIPanels({ settingsOpen: false, scoreboardOpen: false, gameInfoOpen: false }).catch(() => {});
+  // }, []);
 
   /**
    * 设置按钮点击处理
@@ -307,6 +322,7 @@ const App: React.FC = memo(() => {
             graveyard={gameState.graveyard}
             attempts={gameState.attempts}
             onGuess={handleGameGuess}
+            onHintSelect={handleHintSelect}
             isLoading={gameState.isLoading}
             error={gameState.error}
             gameTime={gameState.gameStatus === 'victory' && finalSeconds !== null ? finalSeconds : time}
@@ -324,8 +340,8 @@ const App: React.FC = memo(() => {
               setIsScoreboardOpen(false);
               setIsGameInfoOpen(false);
               setUIPanels({ quickRefOpen: false, settingsOpen: false, scoreboardOpen: false, gameInfoOpen: false }).catch(() => {});
-            } catch (e) {
-              console.error('重置失败:', e);
+            } catch (err) {
+              console.error('重置失败:', err);
             }
           }}
             onToggleQuickRef={() => {
@@ -387,6 +403,8 @@ const App: React.FC = memo(() => {
           setIsScoreboardOpen(false);
           setUIPanels({ scoreboardOpen: false }).catch(() => {});
         }}
+        currentHintCount={gameState.hintCount}
+        perfectVictory={gameState.gameStatus === 'victory' && !gameState.hintUsed}
       />
     )}
   </div>

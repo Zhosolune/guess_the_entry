@@ -595,3 +595,53 @@
 变更摘要：实现完整用户状态持久化系统：本地存储结构（设置/排除/统计）、自动与手动保存、快照恢复、校验与可选加密、时间窗限流开关与适配层集成。
 原因：满足需求“实现完整的用户状态持久化系统与防滥用机制”。
 测试状态：[已测试] 本地类型检查通过（npm run check）；功能在开发环境跑通，后续建议通过实际浏览器断点恢复与容量边界验证。
+时间：2025-11-18 09:30
+操作类型：[重构]
+影响文件：
+- src/utils/stateManager.ts
+- src/App.tsx
+
+变更摘要：引入原子化面板持久化写入 `setUIPanels`，修复设置与计分板抽屉互斥状态在刷新后同时打开的问题。
+原因：分散持久化导致刷新后状态不同步，引发互斥抽屉同时打开的逻辑错误。
+测试状态：[已测试]
+
+时间：2025-11-18 09:45
+操作类型：[新增]
+影响文件：
+- src/types/game.types.ts
+- src/hooks/useGameState.ts
+- src/components/TextDisplayArea/TextDisplayArea.tsx
+- src/components/GameLayout/GameLayout.tsx
+- src/components/BottomToolbar/BottomToolbar.tsx
+- src/components/ScoreboardDrawer.tsx
+- src/utils/stateManager.ts
+
+变更摘要：完成“提示”功能：激活提示后可点击未揭示字块揭示对应字符的全部出现；记录每局提示次数；使用提示获胜不计为完美胜利；计分板展示本局提示次数与是否完美胜利。
+原因：满足用户关于提示交互与计分规则的需求，完善核心玩法。
+测试状态：[已测试]
+时间：2025-11-18 10:05
+操作类型：[修改]
+影响文件：
+- src/styles/animations.css
+- src/components/TextDisplayArea/TextDisplayArea.tsx
+
+变更摘要：提示激活时为未揭示字块添加呼吸式放大动画。移动端仅呼吸动画；桌面端呼吸动画 + hover 高亮（主题色，适配明暗主题）。
+原因：提升提示模式下的可发现性与交互反馈，符合移动/桌面差异化交互标准。
+测试状态：[已测试]
+时间：2025-11-18 10:20
+操作类型：[修改]
+影响文件：
+- src/styles/animations.css
+
+变更摘要：调整提示激活动画为仅闪烁呼吸光效，不再放大；桌面端 hover 增加放大效果，点击时背景颜色以主题色变化。
+原因：根据交互规范优化提示模式：移动端保持低干扰提示，PC端增强悬停与点击反馈。
+测试状态：[已测试]
+时间：2025-11-18 10:32
+操作类型：[修改]
+影响文件：
+- src/styles/animations.css
+- src/components/GameLayout/GameLayout.tsx
+
+变更摘要：取消提示模式阴影光效，改为字块背景色呼吸式深浅变化；PC端 hover 增加悬浮位移；提示按钮改为点击切换开启/关闭。
+原因：降低视觉干扰，强化桌面端交互反馈，并提供便捷的模式开关。
+测试状态：[已测试]

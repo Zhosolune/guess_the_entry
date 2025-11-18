@@ -1,5 +1,4 @@
 import React from 'react';
-import ScoreboardDrawer from './ScoreboardDrawer';
 
 interface GameInfoDrawerProps {
   /**

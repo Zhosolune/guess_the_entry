@@ -9,6 +9,8 @@ interface ScoreboardDrawerProps {
    * 关闭抽屉的回调
    */
   onClose: () => void;
+  currentHintCount?: number;
+  perfectVictory?: boolean;
 }
 
 /**
@@ -21,6 +23,8 @@ interface ScoreboardDrawerProps {
 const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
   isOpen,
   onClose,
+  currentHintCount = 0,
+  perfectVictory = false,
 }) => {
   /**
    * 处理遮罩点击
@@ -67,7 +71,14 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
           <div className="max-w-2xl mx-auto px-3 section pb-0 bg-[var(--color-surface)] rounded-none min-h-[calc(15vh)]">
 
             <div className="space-y-4">
-              计分板占位
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-[var(--color-text-secondary)]">本局提示次数</div>
+                <div className="text-base font-medium">{currentHintCount}</div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-[var(--color-text-secondary)]">是否完美胜利</div>
+                <div className="text-base font-medium">{perfectVictory ? '是' : '否'}</div>
+              </div>
             </div>
 
           </div>

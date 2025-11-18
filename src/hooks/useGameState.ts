@@ -51,6 +51,8 @@ export function useGameState() {
     guessedChars: new Set(),
     graveyard: [],
     attempts: 0,
+    hintCount: 0,
+    hintUsed: false,
     startTime: Date.now(),
     isLoading: false,
     error: null
@@ -120,6 +122,8 @@ export function useGameState() {
         guessedChars: new Set(),
         graveyard: [],
         attempts: 0,
+        hintCount: 0,
+        hintUsed: false,
         startTime: Date.now(),
         isLoading: false,
         error: null
@@ -259,7 +263,7 @@ export function useGameState() {
       // 将本局词条加入排除列表并更新持久化统计
       const entryName = gameState.currentEntry?.entry || '';
       addExcludedEntry(entryName);
-      updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, percent: 100 })
+      updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, percent: 100, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed })
         .catch(e => {
           console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
         });
@@ -280,6 +284,86 @@ export function useGameState() {
       positions: [...entryPositions, ...encyclopediaPositions],
       gameWon: won
     };
+  }, [gameState]);
+
+  /**
+   * 处理提示模式下的字符选择
+   *
+   * 功能描述：在提示模式中，点击未揭示字块后，揭示该字符在词条与百科中的全部出现位置；记录提示使用次数并标记本局已使用提示；若因此满足胜利条件则结算并持久化统计。
+   * 参数说明：
+   * - char: string 待揭示的单个中文字符
+   * 返回值说明：
+   * - { success: boolean; reason?: string }
+   * 异常说明：
+   * - 输入校验失败时抛出 ValidationError（非单字符或非中文字符）
+   */
+  const handleHintSelectChar = useCallback((char: string) => {
+    if (gameState.gameStatus !== 'playing' || gameState.isLoading) {
+      return { success: false, reason: '游戏未开始或已结束' };
+    }
+    if (!gameState.currentEntry) {
+      return { success: false, reason: '游戏数据不完整' };
+    }
+    if (!char || char.length !== 1) {
+      throw ErrorHandler.handleValidationError('请输入单个字符', 'char');
+    }
+    if (!/^[\u4e00-\u9fa5]$/.test(char)) {
+      throw ErrorHandler.handleValidationError('请输入有效的中文字符', 'char');
+    }
+    if (gameState.revealedChars.has(char) || gameState.guessedChars.has(char)) {
+      return { success: false, reason: '该字符已经揭示' };
+    }
+    const normalizedChar = char.trim();
+    const entry = gameState.currentEntry.entry;
+    const encyclopedia = gameState.currentEntry.encyclopedia;
+    const entryPositions = findCharIndices(entry, normalizedChar);
+    const encyclopediaPositions = findCharIndices(encyclopedia, normalizedChar);
+    if (entryPositions.length === 0 && encyclopediaPositions.length === 0) {
+      return { success: false, reason: '字符不存在' };
+    }
+    const newRevealedChars = new Set(gameState.revealedChars);
+    const newGuessedChars = new Set(gameState.guessedChars);
+    newGuessedChars.add(normalizedChar);
+    newRevealedChars.add(normalizedChar);
+    const newGameState: GameState = {
+      ...gameState,
+      revealedChars: newRevealedChars,
+      guessedChars: newGuessedChars,
+      hintUsed: true,
+      hintCount: gameState.hintCount + 1
+    };
+    const won = checkVictory(entry, newGuessedChars);
+    if (won) {
+      newGameState.gameStatus = 'victory';
+      const gameTime = Date.now() - gameState.startTime;
+      setStats(prev => ({
+        ...prev,
+        totalGames: prev.totalGames + 1,
+        totalWins: prev.totalWins + 1,
+        totalAttempts: prev.totalAttempts + newGameState.attempts,
+        bestTime: prev.bestTime ? Math.min(prev.bestTime, gameTime) : gameTime,
+        currentStreak: prev.currentStreak + 1,
+        maxStreak: Math.max(prev.maxStreak, prev.currentStreak + 1),
+        totalTime: prev.totalTime + gameTime,
+        victory: true,
+        category: gameState.category,
+        entry: gameState.currentEntry?.entry || '',
+        victoryCount: prev.victoryCount + 1
+      }));
+      const entryName = gameState.currentEntry?.entry || '';
+      addExcludedEntry(entryName);
+      updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, percent: 100, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed })
+        .catch(e => {
+          console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
+        });
+    }
+    setGameState(newGameState);
+    try {
+      saveGameState(newGameState);
+    } catch (storageError) {
+      console.warn('游戏状态保存失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(storageError)));
+    }
+    return { success: true };
   }, [gameState]);
 
   /**
@@ -307,6 +391,8 @@ export function useGameState() {
         guessedChars: new Set(),
         graveyard: [],
         attempts: 0,
+        hintCount: 0,
+        hintUsed: false,
         startTime: Date.now(),
         isLoading: false,
         error: null
@@ -359,6 +445,7 @@ export function useGameState() {
     stats,
     initializeGame,
     handleGuess,
+    handleHintSelectChar,
     resetGame,
     updateCurrentTime,
     loadSavedGame,

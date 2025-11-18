@@ -40,6 +40,8 @@ export interface GameState {
   guessedChars: Set<string>;
   graveyard: string[];
   attempts: number;
+  hintCount: number;
+  hintUsed: boolean;
   startTime: number;
   isLoading: boolean;
   error: string | null;

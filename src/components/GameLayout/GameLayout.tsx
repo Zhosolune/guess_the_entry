@@ -3,7 +3,6 @@ import { EntryData, GameStatus } from '../../types/game.types';
 import { useKeyboard } from '../../hooks/useKeyboard';
 import { useDeviceProfile } from '../../hooks/useDeviceProfile';
 import { toast } from 'sonner';
-import { requestHint, Hint, HintContext } from '../../services/hints';
 import { GameInfoBar } from '../GameInfoBar/GameInfoBar';
 import { SearchInput } from '../SearchInput/SearchInput';
 import { TextDisplayArea } from '../TextDisplayArea/TextDisplayArea';
@@ -28,6 +27,7 @@ interface GameLayoutProps {
   onToggleQuickRef?: () => void;
   /** 速查表是否打开（用于固定按钮主题色） */
   quickRefOpen?: boolean;
+  onHintSelect?: (char: string) => void;
 }
 
 /**
@@ -42,6 +42,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   graveyard,
   attempts,
   onGuess,
+  onHintSelect,
   isLoading,
   error,
   gameTime,
@@ -55,9 +56,8 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   const [newlyRevealed, setNewlyRevealed] = useState<string[]>([]);
   // 记录已触发过揭示动画的字符，避免重复动画
   const [animatedChars, setAnimatedChars] = useState<Set<string>>(new Set());
-  const [hintPreview, setHintPreview] = useState<Hint | null>(null);
-  /** 提示流程激活态（用于按钮固定主题色显示） */
   const [hintActive, setHintActive] = useState<boolean>(false);
+  const [hintSelectMode, setHintSelectMode] = useState<boolean>(false);
   const [overlayVisible, setOverlayVisible] = useState<boolean>(false);
 
   // 格式化时间显示
@@ -73,7 +73,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
    * 重复汉字在 revealed 集合中被揭示一次后，其所有出现位置视为揭示。
    */
   const gameProgress = useMemo(() => {
-    const isPunctuation = (char: string): boolean => /[，。！？、；：""''（）《》〈〉【】—…·.,;:!?'"(){}\[\]<>\-]/.test(char);
+    const isPunctuation = (char: string): boolean => /[\p{P}\p{S}]/u.test(char);
     
     const { entry, encyclopedia } = entryData;
     const entryChars = entry.split('');
@@ -113,7 +113,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
     // 执行猜测
     onGuess(char);
     setInputValue('');
-  }, [isLoading, guessedChars, onGuess]);
+  }, [isLoading, guessedChars, graveyard, onGuess]);
 
   /**
    * 处理输入框值变化
@@ -141,25 +141,27 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   /**
    * 处理提示按钮点击
    */
-  const handleHintClick = useCallback(async (): Promise<void> => {
-    try {
-      // 开始提示流程：激活按钮主题色
-      setHintActive(true);
-      const ctx: HintContext = {
-        entryData: entryData,
-        guessedChars: guessedChars,
-        revealedChars: revealedChars,
-        attempts: attempts
-      };
-      const hint = await requestHint(ctx);
-      setHintPreview(hint);
-    } catch (err) {
-      console.error('提示请求失败:', err);
-    } finally {
-      // 提示流程结束：恢复按钮原始颜色
-      setHintActive(false);
+  const handleHintClick = useCallback((): void => {
+    if (gameStatus !== 'playing') return;
+    setHintActive(prev => {
+      const next = !prev;
+      setHintSelectMode(next);
+      if (next) {
+        toast.info('提示已开启：点击未揭示字符进行揭示');
+      } else {
+        toast.info('提示已关闭');
+      }
+      return next;
+    });
+  }, [gameStatus]);
+
+  const handleHintSelect = useCallback((char: string) => {
+    setHintActive(false);
+    setHintSelectMode(false);
+    if (typeof onHintSelect === 'function') {
+      onHintSelect(char);
     }
-  }, [entryData, guessedChars, revealedChars, attempts]);
+  }, [onHintSelect]);
 
   /**
    * 监听新揭示的字符，仅在首次揭示时触发动画
@@ -261,6 +263,8 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         autoReveal={overlayVisible}
         isMobileLayout={isMobile}
         gameStatus={gameStatus}
+        hintSelectMode={hintSelectMode}
+        onHintSelect={handleHintSelect}
       />
 
       {/* 底部工具栏 */}
