@@ -221,7 +221,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         <div className="fixed left-0 right-0 top-[var(--topbar-h)] z-40 bg-[var(--color-surface)] h-[calc(var(--searchbar-h)+var(--infobar-h))]">
           <div className="container mx-auto max-w-4xl">
             <div className="text-center">
-              <div className="text-emerald-600 text-lg font-semibold py-1">恭喜通关！</div>
+              <div className="text-[var(--color-success)] text-lg font-semibold py-1">恭喜通关！</div>
               <div className="text-xs text-[var(--color-text-muted)]">可以选择查看词条内容或再来一局</div>
               <div className="mt-2 flex justify-center gap-3">
                 <button

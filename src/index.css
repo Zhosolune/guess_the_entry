@@ -336,7 +336,7 @@
 }
 
 /* 自定义工具类 */
-@layer utilities {
+  @layer utilities {
   /* 文本选择样式 */
   .select-none {
     user-select: none;
@@ -465,4 +465,11 @@
   .category-card.selected {
     background: var(--color-btn-bg-hover);
     /* box-shadow: inset 0 0 0 2px var(--color-primary); */
+  }
+  /* 隐藏滚动条（保持可滚动） */
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
