@@ -1,4 +1,5 @@
 import React from 'react';
+import { SettingBoardIcon } from '../assets/settingBoard';
 
 export type QuickRefPosition = 'bottom' | 'left' | 'right';
 
@@ -105,7 +106,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         <div className="w-full bg-[var(--color-surface)] border-b border-[var(--color-border)]">
           <div className="max-w-2xl mx-auto p-4 pb-0 bg-[var(--color-surface)] rounded-none min-h-[calc(15vh)]">
 
-            <div className="text-xl font-semi text-[var(--color-text)] pb-3">设置</div>
+            <div className="mb-4 justify-center flex"><SettingBoardIcon /></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* 速查表位置设置 */}
               <div>
