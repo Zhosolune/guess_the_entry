@@ -37,6 +37,7 @@ export interface PersistedState {
   };
   apiUsage?: Record<string, number[]>; // 每次调用的时间戳列表
   lastGame?: SerializedGameState | null;
+  ui?: { quickRefOpen?: boolean; settingsOpen?: boolean; scoreboardOpen?: boolean; gameInfoOpen?: boolean };
 }
 
 interface SaveOptions {
@@ -78,7 +79,8 @@ function buildContent(state: PersistedState): PersistedContent {
     excludedEntries: state.excludedEntries,
     stats: state.stats,
     apiUsage: state.apiUsage,
-    lastGame: state.lastGame ?? null
+    lastGame: state.lastGame ?? null,
+    ui: state.ui
   };
 }
 
@@ -475,4 +477,57 @@ export async function shouldAllowApiCall(key: string, limit: number, windowMs: n
     safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
   }
   return allowed;
+}
+export async function setQuickRefOpen(open: boolean): Promise<void> {
+  const state = await initState();
+  state.ui = state.ui || {};
+  state.ui.quickRefOpen = open;
+  const contentStr = JSON.stringify(buildContent(state));
+  state.integrity.checksum = await sha256(contentStr);
+  state.integrity.signature = await hmacSign(contentStr);
+  state.integrity.changeCount += 1;
+  safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
+}
+
+export async function setSettingsOpen(open: boolean): Promise<void> {
+  const state = await initState();
+  state.ui = state.ui || {};
+  state.ui.settingsOpen = open;
+  const contentStr = JSON.stringify(buildContent(state));
+  state.integrity.checksum = await sha256(contentStr);
+  state.integrity.signature = await hmacSign(contentStr);
+  state.integrity.changeCount += 1;
+  safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
+}
+
+export async function setScoreboardOpen(open: boolean): Promise<void> {
+  const state = await initState();
+  state.ui = state.ui || {};
+  state.ui.scoreboardOpen = open;
+  const contentStr = JSON.stringify(buildContent(state));
+  state.integrity.checksum = await sha256(contentStr);
+  state.integrity.signature = await hmacSign(contentStr);
+  state.integrity.changeCount += 1;
+  safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
+}
+
+export async function setGameInfoOpen(open: boolean): Promise<void> {
+  const state = await initState();
+  state.ui = state.ui || {};
+  state.ui.gameInfoOpen = open;
+  const contentStr = JSON.stringify(buildContent(state));
+  state.integrity.checksum = await sha256(contentStr);
+  state.integrity.signature = await hmacSign(contentStr);
+  state.integrity.changeCount += 1;
+  safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
+}
+
+export async function setUIPanels(patch: { quickRefOpen?: boolean; settingsOpen?: boolean; scoreboardOpen?: boolean; gameInfoOpen?: boolean }): Promise<void> {
+  const state = await initState();
+  state.ui = { ...(state.ui || {}), ...patch };
+  const contentStr = JSON.stringify(buildContent(state));
+  state.integrity.checksum = await sha256(contentStr);
+  state.integrity.signature = await hmacSign(contentStr);
+  state.integrity.changeCount += 1;
+  safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
 }

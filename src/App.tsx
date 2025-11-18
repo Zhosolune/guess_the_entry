@@ -11,6 +11,7 @@ import { useGameState } from './hooks/useGameState';
 import { useTimestampTimer } from './hooks/useTimer';
 import { GameCategory } from './types/game.types';
 import TopBar from './components/TopBar';
+import { initState, updateUserSettings, setUIPanels } from './utils/stateManager';
 
 /**
  * 主应用组件
@@ -80,6 +81,7 @@ const App: React.FC = memo(() => {
       setFinalSeconds(null);
       start();
       setHintsEnabled(enableHints);
+      updateUserSettings({ hintsEnabled: enableHints }).catch(() => {});
       await initializeGame(category);
     } catch (error) {
       console.error('游戏初始化失败:', error);
@@ -154,6 +156,25 @@ const App: React.FC = memo(() => {
   React.useEffect(() => {
     (async () => {
       try {
+        const persisted = await initState();
+        if (persisted?.settings?.quickRefPosition) {
+          setQuickRefPosition(persisted.settings.quickRefPosition as QuickRefPosition);
+        }
+        if (typeof persisted?.settings?.hintsEnabled === 'boolean') {
+          setHintsEnabled(!!persisted.settings.hintsEnabled);
+        }
+        if (typeof persisted?.ui?.quickRefOpen === 'boolean') {
+          setIsQuickRefOpen(!!persisted.ui.quickRefOpen);
+        }
+        if (typeof persisted?.ui?.settingsOpen === 'boolean') {
+          setIsSettingsOpen(!!persisted.ui.settingsOpen);
+        }
+        if (typeof persisted?.ui?.scoreboardOpen === 'boolean') {
+          setIsScoreboardOpen(!!persisted.ui.scoreboardOpen);
+        }
+        if (typeof persisted?.ui?.gameInfoOpen === 'boolean') {
+          setIsGameInfoOpen(!!persisted.ui.gameInfoOpen);
+        }
         const restored = await loadSavedGame();
         if (restored) {
           if (restored.gameStatus === 'playing') {
@@ -179,6 +200,8 @@ const App: React.FC = memo(() => {
   const closeAllDrawers = React.useCallback((): void => {
     setIsSettingsOpen(false);
     setIsScoreboardOpen(false);
+    setIsGameInfoOpen(false);
+    setUIPanels({ settingsOpen: false, scoreboardOpen: false, gameInfoOpen: false }).catch(() => {});
   }, []);
 
   /**
@@ -190,10 +213,12 @@ const App: React.FC = memo(() => {
     setIsSettingsOpen(prev => {
       const next = !prev;
       if (next) {
-        // 打开设置抽屉 -> 关闭其他抽屉
         setIsScoreboardOpen(false);
         setIsGameInfoOpen(false);
+        setUIPanels({ settingsOpen: true, scoreboardOpen: false, gameInfoOpen: false }).catch(() => {});
+        return next;
       }
+      setUIPanels({ settingsOpen: false }).catch(() => {});
       return next;
     });
   }, []);
@@ -207,10 +232,12 @@ const App: React.FC = memo(() => {
     setIsScoreboardOpen(prev => {
       const next = !prev;
       if (next) {
-        // 打开计分板抽屉 -> 关闭其他抽屉
         setIsSettingsOpen(false);
         setIsGameInfoOpen(false);
+        setUIPanels({ scoreboardOpen: true, settingsOpen: false, gameInfoOpen: false }).catch(() => {});
+        return next;
       }
+      setUIPanels({ scoreboardOpen: false }).catch(() => {});
       return next;
     });
   }, []);
@@ -224,10 +251,12 @@ const App: React.FC = memo(() => {
     setIsGameInfoOpen(prev => {
       const next = !prev;
       if (next) {
-        // 打开游戏信息抽屉 -> 关闭其他抽屉
         setIsSettingsOpen(false);
         setIsScoreboardOpen(false);
+        setUIPanels({ gameInfoOpen: true, settingsOpen: false, scoreboardOpen: false }).catch(() => {});
+        return next;
       }
+      setUIPanels({ gameInfoOpen: false }).catch(() => {});
       return next;
     });
   }, []);
@@ -264,6 +293,7 @@ const App: React.FC = memo(() => {
             <GameStart 
               onStartGame={handleStartGame}
               isLoading={gameState.isLoading}
+              initialHintsEnabled={hintsEnabled}
             />
           </div>
         )}
@@ -283,18 +313,21 @@ const App: React.FC = memo(() => {
             gameStatus={gameState.gameStatus}
             hintsEnabled={hintsEnabled}
             quickRefOpen={isQuickRefOpen}
-            onRestart={() => {
-              try {
-                stopTimer();
-                resetTimer();
-                setFinalSeconds(null);
-                resetGame();
-                setIsQuickRefOpen(false);
-                setIsSettingsOpen(false);
-              } catch (e) {
-                console.error('重置失败:', e);
-              }
-            }}
+          onRestart={() => {
+            try {
+              stopTimer();
+              resetTimer();
+              setFinalSeconds(null);
+              resetGame();
+              setIsQuickRefOpen(false);
+              setIsSettingsOpen(false);
+              setIsScoreboardOpen(false);
+              setIsGameInfoOpen(false);
+              setUIPanels({ quickRefOpen: false, settingsOpen: false, scoreboardOpen: false, gameInfoOpen: false }).catch(() => {});
+            } catch (e) {
+              console.error('重置失败:', e);
+            }
+          }}
             onToggleQuickRef={() => {
               setIsQuickRefOpen(prev => {
                 const next = !prev;
@@ -303,6 +336,7 @@ const App: React.FC = memo(() => {
                 //   setIsSettingsOpen(false);
                 //   setIsScoreboardOpen(false);
                 // }
+                setUIPanels({ quickRefOpen: next }).catch(() => {});
                 return next;
               });
             }}
@@ -312,13 +346,19 @@ const App: React.FC = memo(() => {
     {/* 游戏信息抽屉（TopBar 下方，最上层） */}
     <GameInfoDrawer
       isOpen={isGameInfoOpen}
-      onClose={() => setIsGameInfoOpen(false)}
+      onClose={() => {
+        setIsGameInfoOpen(false);
+        setUIPanels({ gameInfoOpen: false }).catch(() => {});
+      }}
     />
     {/* 速查表抽屉（全局固定定位，默认隐藏） */}
     {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && (
       <QuickRefDrawer
         isOpen={isQuickRefOpen}
-        onClose={() => setIsQuickRefOpen(false)}
+        onClose={() => {
+          setIsQuickRefOpen(false);
+          setUIPanels({ quickRefOpen: false }).catch(() => {});
+        }}
         graveyard={gameState.graveyard}
         guessedChars={gameState.guessedChars}
         position={quickRefPosition}
@@ -328,16 +368,25 @@ const App: React.FC = memo(() => {
     {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && (
       <SettingsDrawer
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={() => {
+          setIsSettingsOpen(false);
+          setUIPanels({ settingsOpen: false }).catch(() => {});
+        }}
         quickRefPosition={quickRefPosition}
-        onChangeQuickRefPosition={(pos) => setQuickRefPosition(pos)}
+        onChangeQuickRefPosition={(pos) => {
+          setQuickRefPosition(pos);
+          updateUserSettings({ quickRefPosition: pos }).catch(() => {});
+        }}
       />
     )}
     {/* 计分板抽屉（TopBar 下方，最上层） */}
     {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && (
       <ScoreboardDrawer
         isOpen={isScoreboardOpen}
-        onClose={() => setIsScoreboardOpen(false)}
+        onClose={() => {
+          setIsScoreboardOpen(false);
+          setUIPanels({ scoreboardOpen: false }).catch(() => {});
+        }}
       />
     )}
   </div>

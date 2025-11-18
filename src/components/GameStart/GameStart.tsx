@@ -8,6 +8,7 @@ import { GameCategory } from '../../types/game.types';
 interface GameStartProps {
   onStartGame: (category: GameCategory, enableHints: boolean) => void;
   isLoading: boolean;
+  initialHintsEnabled?: boolean;
 }
 
 /**
@@ -15,10 +16,16 @@ interface GameStartProps {
  * 提供领域选择和游戏开始功能
  * 使用React.memo优化渲染性能
  */
-export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoading }) => {
+export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoading, initialHintsEnabled }) => {
   const [selectedCategory, setSelectedCategory] = useState<GameCategory | ''>('');
   const [hoveredCategory, setHoveredCategory] = useState<string>('');
-  const [enableHints, setEnableHints] = useState<boolean>(true);
+  const [enableHints, setEnableHints] = useState<boolean>(initialHintsEnabled ?? true);
+
+  React.useEffect(() => {
+    if (typeof initialHintsEnabled === 'boolean') {
+      setEnableHints(initialHintsEnabled);
+    }
+  }, [initialHintsEnabled]);
 
   /**
    * 处理领域选择
