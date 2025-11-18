@@ -82,7 +82,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
     ];
   }, [aggregates, winRate]);
 
-  const drawerClasses = `${'fixed top-[var(--topbar-h)] left-0 right-0 z-[48] transform transition-transform duration-200'} ${isOpen ? 'translate-y-0' : '-translate-y-full'}`;
+  const drawerClasses = `${'fixed top-[var(--topbar-h)] left-0 right-0 z-[48] transform transition-transform duration-200'} ${isOpen ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`;
 
   const computeCategoryScores = (): Record<string, number> => {
     const scores: Record<string, number> = {};
@@ -111,22 +111,20 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
     e.stopPropagation();
   };
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
-    <div>
-      <div
-        className="fixed inset-0 z-[45] bg-transparent"
-        onClick={handleBackdropClick}
-        aria-hidden="true"
-      />
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[45] bg-transparent"
+          onClick={handleBackdropClick}
+          aria-hidden="true"
+        />
+      )}
 
       <div
         className={drawerClasses}
         role="dialog"
-        aria-modal={true}
+        aria-modal={isOpen}
         aria-label="设置面板"
         onClick={stopPropagation}
       >
@@ -178,7 +176,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
