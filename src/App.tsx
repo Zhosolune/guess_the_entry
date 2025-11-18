@@ -316,6 +316,7 @@ const App: React.FC = memo(() => {
         {(gameState.gameStatus === 'playing' || gameState.gameStatus === 'victory') && gameState.currentEntry && (
           <div className="flex-1 flex flex-col overflow-hidden">
           <GameLayout
+            gameId={gameState.gameId}
             entryData={gameState.currentEntry}
             guessedChars={gameState.guessedChars}
             revealedChars={gameState.revealedChars}

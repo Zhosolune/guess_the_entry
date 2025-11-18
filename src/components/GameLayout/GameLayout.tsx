@@ -11,6 +11,7 @@ import { MobileLayout } from './MobileLayout';
 import { DesktopLayout } from './DesktopLayout';
 
 interface GameLayoutProps {
+  gameId: string;
   entryData: EntryData;
   guessedChars: Set<string>;
   revealedChars: Set<string>;
@@ -36,6 +37,7 @@ interface GameLayoutProps {
  * 顶部栏吸顶，底部工具栏吸底，文本区域可滚动
  */
 export const GameLayout: React.FC<GameLayoutProps> = memo(({ 
+  gameId,
   entryData,
   guessedChars,
   revealedChars,
@@ -58,7 +60,9 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   const [animatedChars, setAnimatedChars] = useState<Set<string>>(new Set());
   const [hintActive, setHintActive] = useState<boolean>(false);
   const [hintSelectMode, setHintSelectMode] = useState<boolean>(false);
-  const [overlayVisible, setOverlayVisible] = useState<boolean>(false);
+  const [settlementOpen, setSettlementOpen] = useState<boolean>(false);
+  const [fullReveal, setFullReveal] = useState<boolean>(false);
+  const hasShownRef = React.useRef<boolean>(false);
 
   // 格式化时间显示
   const formattedTime = useMemo(() => {
@@ -133,10 +137,19 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   useKeyboard(handleKeyboardInput);
 
   React.useEffect(() => {
-    if (gameStatus !== 'victory') {
-      setOverlayVisible(false);
+    if (gameStatus === 'victory') {
+      const key = `settlement_shown:${gameId}`;
+      const already = sessionStorage.getItem(key) === '1';
+      if (!already && !hasShownRef.current) {
+        setSettlementOpen(true);
+        sessionStorage.setItem(key, '1');
+        hasShownRef.current = true;
+      }
+    } else {
+      hasShownRef.current = false;
     }
-  }, [gameStatus]);
+    setFullReveal(false);
+  }, [gameStatus, gameId]);
 
   /**
    * 处理提示按钮点击
@@ -227,9 +240,9 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
                 <button
                   type="button"
                   className="btn-secondary btn-compact-mobile"
-                  onClick={() => setOverlayVisible(v => !v)}
+                  onClick={() => setFullReveal(v => !v)}
                 >
-                  {overlayVisible ? '隐藏遮罩' : '显示遮罩'}
+                  {fullReveal ? '恢复遮罩' : '显示全文'}
                 </button>
                 <button
                   type="button"
@@ -260,19 +273,40 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         entryData={entryData}
         revealedChars={revealedChars}
         newlyRevealed={newlyRevealed}
-        autoReveal={overlayVisible}
+        autoReveal={fullReveal}
         isMobileLayout={isMobile}
         gameStatus={gameStatus}
         hintSelectMode={hintSelectMode}
         onHintSelect={handleHintSelect}
       />
 
+      {/* 胜利遮罩动画卡片 */}
+      {gameStatus === 'victory' && settlementOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-hidden={!settlementOpen}
+          className="fixed left-0 right-0 top-0 bottom-0 z-[60] bg-[var(--color-bg-app)]/60 backdrop-blur-sm overflow-y-auto flex items-center justify-center"
+        >
+          <div className="card-flat section success-banner flex flex-col items-center gap-3 w-[92%] max-w-md text-center">
+            <div className="text-[var(--color-success)] text-xl font-semibold">恭喜通关！</div>
+            <button
+              type="button"
+              className="btn-primary btn-compact-mobile"
+              onClick={() => setSettlementOpen(false)}
+            >
+              确认
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 底部工具栏 */}
       <BottomToolbar
         onHintClick={handleHintClick}
         onToggleQuickRef={onToggleQuickRef}
         disabled={isLoading}
-        hintsEnabled={hintsEnabled}
+        hintsEnabled={hintsEnabled && gameStatus === 'playing'}
         fixed={isMobile}
         quickRefOpen={quickRefOpen}
         hintActive={hintActive}
