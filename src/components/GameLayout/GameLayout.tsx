@@ -9,6 +9,8 @@ import { TextDisplayArea } from '../TextDisplayArea/TextDisplayArea';
 import { BottomToolbar } from '../BottomToolbar/BottomToolbar';
 import { MobileLayout } from './MobileLayout';
 import { DesktopLayout } from './DesktopLayout';
+import { Fire } from '../../assets/fire';
+import '../../styles/fireworks.css';
 
 interface GameLayoutProps {
   gameId: string;
@@ -286,17 +288,35 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
           role="dialog"
           aria-modal="true"
           aria-hidden={!settlementOpen}
-          className="fixed left-0 right-0 top-0 bottom-0 z-[60] bg-[var(--color-bg-app)]/60 backdrop-blur-sm overflow-y-auto flex items-center justify-center"
+          className="fixed left-0 right-0 top-0 bottom-0 z-[60] bg-[var(--color-bg-app)]/60 backdrop-blur-sm overflow-y-auto"
         >
-          <div className="card-flat section success-banner flex flex-col items-center gap-3 w-[92%] max-w-md text-center">
-            <div className="text-[var(--color-success)] text-xl font-semibold">恭喜通关！</div>
-            <button
-              type="button"
-              className="btn-primary btn-compact-mobile"
-              onClick={() => setSettlementOpen(false)}
-            >
-              确认
-            </button>
+          <div className="pyro">
+            <div className="before"></div>
+            <div className="after"></div>
+          </div>
+          <div className="relative z-10 flex justify-center items-start h-full pt-[33vh]">
+            <div className="card-flat section success-banner flex flex-col items-center gap-3 w-[70%] max-w-md text-center">
+                <Fire />
+              <div className="text-[var(--color-success)] text-2xl font-semibold">成功！你集了个博！</div>
+              <div className="flex items-center justify-center gap-4 text-xs text-[var(--color-text-muted)]">
+                <div>
+                  耗时：<span className="text-[var(--color-text)] font-semibold">{formattedTime}</span>
+                </div>
+                <div>
+                  尝试次数：<span className="text-[var(--color-text)] font-semibold">{attempts}</span>
+                </div>
+                <div>
+                  胜利时进度：<span className="text-[var(--color-text)] font-semibold">{gameProgress}%</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-primary btn-compact-mobile"
+                onClick={() => setSettlementOpen(false)}
+              >
+                确认
+              </button>
+            </div>
           </div>
         </div>
       )}
