@@ -506,3 +506,20 @@ html.dark .graveyard-scroll {
 html.dark .graveyard-scroll::-webkit-scrollbar-thumb {
   background-color: #6b7280; /* gray-500 */
 }
+.hint-disabled-front {
+  background-color: rgba(244, 63, 94, 0.22); /* red-500 @ 22% */
+  outline: none;
+  animation: none !important;
+}
+
+@media (min-width: 768px) {
+  .hint-disabled-front:hover {
+    transform: none;
+    background-color: rgba(244, 63, 94, 0.22);
+    outline: none;
+  }
+}
+
+html.dark .hint-disabled-front {
+  background-color: rgba(244, 63, 94, 0.28);
+}
