@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import Pinyin from 'tiny-pinyin';
+import { initState, setUIPanels } from '../../utils/stateManager';
 
 export interface CorrectPanelProps {
   /** 已猜对的字符集合 */
@@ -112,7 +113,22 @@ export const CorrectPanel: React.FC<CorrectPanelProps> = ({ guessedChars }) => {
    */
   const [showLabels, setShowLabels] = useState<boolean>(false);
   const toggleLabels = useCallback((): void => {
-    setShowLabels((prev) => !prev);
+    setShowLabels((prev) => {
+      const next = !prev;
+      setUIPanels({ correctShowLabels: next }).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const persisted = await initState();
+        if (typeof persisted?.ui?.correctShowLabels === 'boolean') {
+          setShowLabels(!!persisted.ui.correctShowLabels);
+        }
+      } catch {}
+    })();
   }, []);
 
   /**

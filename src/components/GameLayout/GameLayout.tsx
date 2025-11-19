@@ -298,15 +298,15 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
             <div className="card-flat section success-banner flex flex-col items-center gap-3 w-[70%] max-w-md text-center">
                 <Fire />
               <div className="text-[var(--color-success)] text-2xl font-semibold">成功！你集了个博！</div>
-              <div className="flex items-center justify-center gap-4 text-xs text-[var(--color-text-muted)]">
+              <div className="flex items-center justify-center gap-4 text-[var(--color-text-muted)]">
                 <div>
-                  耗时：<span className="text-[var(--color-text)] font-semibold">{formattedTime}</span>
+                  耗时：<span className="text-[var(--color-text)] font-semi">{formattedTime}</span>
                 </div>
                 <div>
-                  尝试次数：<span className="text-[var(--color-text)] font-semibold">{attempts}</span>
+                  尝试次数：<span className="text-[var(--color-text)] font-semi">{attempts}</span>
                 </div>
                 <div>
-                  胜利时进度：<span className="text-[var(--color-text)] font-semibold">{gameProgress}%</span>
+                  胜利时进度：<span className="text-[var(--color-text)] font-semi">{gameProgress}%</span>
                 </div>
               </div>
               <button

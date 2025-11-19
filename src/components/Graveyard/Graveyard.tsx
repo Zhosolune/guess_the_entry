@@ -1,6 +1,7 @@
 import React, { useMemo, memo, useState, useCallback } from 'react';
 import { Skull } from 'lucide-react';
 import Pinyin from 'tiny-pinyin';
+import { initState, setUIPanels } from '../../utils/stateManager';
 
 interface GraveyardProps {
   graveyard: string[];
@@ -113,7 +114,22 @@ export const Graveyard: React.FC<GraveyardProps> = memo(({ graveyard }) => {
    */
   const [showLabels, setShowLabels] = useState<boolean>(false);
   const toggleLabels = useCallback((): void => {
-    setShowLabels((prev) => !prev);
+    setShowLabels((prev) => {
+      const next = !prev;
+      setUIPanels({ graveyardShowLabels: next }).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const persisted = await initState();
+        if (typeof persisted?.ui?.graveyardShowLabels === 'boolean') {
+          setShowLabels(!!persisted.ui.graveyardShowLabels);
+        }
+      } catch {}
+    })();
   }, []);
 
   if (graveyard.length === 0) {

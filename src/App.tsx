@@ -336,11 +336,10 @@ const App: React.FC = memo(() => {
               resetTimer();
               setFinalSeconds(null);
               resetGame();
-              setIsQuickRefOpen(false);
               setIsSettingsOpen(false);
               setIsScoreboardOpen(false);
               setIsGameInfoOpen(false);
-              setUIPanels({ quickRefOpen: false, settingsOpen: false, scoreboardOpen: false, gameInfoOpen: false }).catch(() => {});
+              setUIPanels({ settingsOpen: false, scoreboardOpen: false, gameInfoOpen: false }).catch(() => {});
             } catch (err) {
               console.error('重置失败:', err);
             }

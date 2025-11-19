@@ -39,7 +39,7 @@ export interface PersistedState {
   };
   apiUsage?: Record<string, number[]>; // 每次调用的时间戳列表
   lastGame?: SerializedGameState | null;
-  ui?: { quickRefOpen?: boolean; settingsOpen?: boolean; scoreboardOpen?: boolean; gameInfoOpen?: boolean };
+  ui?: { quickRefOpen?: boolean; settingsOpen?: boolean; scoreboardOpen?: boolean; gameInfoOpen?: boolean; graveyardShowLabels?: boolean; correctShowLabels?: boolean };
 }
 
 interface SaveOptions {
@@ -536,7 +536,7 @@ export async function setGameInfoOpen(open: boolean): Promise<void> {
   safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
 }
 
-export async function setUIPanels(patch: { quickRefOpen?: boolean; settingsOpen?: boolean; scoreboardOpen?: boolean; gameInfoOpen?: boolean }): Promise<void> {
+export async function setUIPanels(patch: { quickRefOpen?: boolean; settingsOpen?: boolean; scoreboardOpen?: boolean; gameInfoOpen?: boolean; graveyardShowLabels?: boolean; correctShowLabels?: boolean }): Promise<void> {
   const state = await initState();
   state.ui = { ...(state.ui || {}), ...patch };
   const contentStr = JSON.stringify(buildContent(state));
