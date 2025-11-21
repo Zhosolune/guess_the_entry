@@ -661,32 +661,3 @@
 变更摘要：计分板增加“胜率”指标；指标样式改为大数字+小文字，一行6列流式布局；领域能力评分增加背景填充占位并保持数值填充待计算。
 原因：增强统计可读性与视觉一致性，预留评分公式接入空间。
 测试状态：[已测试]
-时间：2025-11-20 18:05
-操作类型：[功能增强]
-影响文件：
-- src/components/TextDisplayArea/TextDisplayArea.tsx
-- src/styles/animations.css
-变更摘要：提示模式下禁用“未揭示字符”的前N（词条字数）个字块；百科内容的前N字块也不可交互；为禁用字块新增浅红填充并移除呼吸/hover动效。
-原因：避免玩家通过提示直接获取答案；视觉上区分受限字块与普通遮罩。
-测试状态：[已测试]
-
-时间：2025-11-20 18:07
-操作类型：[功能增强]
-影响文件：
-- src/utils/stateManager.ts
-- src/components/Graveyard/Graveyard.tsx
-- src/components/CorrectPanel/CorrectPanel.tsx
-- src/App.tsx
-变更摘要：坟场与集博的“首字母标签”开关持久化；“速查表”在“再来一局”后保持开启状态，不再被强制关闭。
-原因：刷新或开始新局导致的个性化 UI 状态丢失，影响连续体验。
-测试状态：[已测试]
-
-时间：2025-11-20 18:12
-操作类型：[重构]
-影响文件：
-- src/utils/stateManager.ts
-- src/services/deepseek.ts
-- src/hooks/useGameState.ts
-变更摘要：排除词改为按领域分类管理（excludedByCategory）；生成词条时仅传当前领域的排除列表；“随机”领域改为从既定领域集合中随机选取一个具体领域后再生成词条；fallback 映射支持中文类别到英文 slug。
-原因：避免无关领域排除词污染请求，降低DeepSeek生成负载；修正“随机”领域实现偏差，保证类别一致性与可控性。
-测试状态：[已测试]

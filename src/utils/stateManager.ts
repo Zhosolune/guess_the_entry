@@ -20,13 +20,11 @@ export interface UserSettings {
   hintsEnabled?: boolean;
 }
 
-type ExcludedByCategory = Record<Exclude<GameCategory, '随机'>, string[]>;
-
 export interface PersistedState {
   version: string;
   timestamp: number;
   settings: UserSettings;
-  excludedByCategory: ExcludedByCategory;
+  excludedByCategory?: Record<string, string[]>;
   stats: {
     totalSuccess: number;
     totalGames: number;
@@ -53,17 +51,7 @@ const DEFAULT_STATE: PersistedState = {
   version: '1.0.0',
   timestamp: Date.now(),
   settings: { theme: 'system', quickRefPosition: 'bottom', hintsEnabled: true },
-  excludedByCategory: {
-    '自然': [],
-    '天文': [],
-    '地理': [],
-    '动漫': [],
-    '影视': [],
-    '游戏': [],
-    '体育': [],
-    '历史': [],
-    'ACGN': []
-  },
+  excludedByCategory: {},
   stats: {
     totalSuccess: 0,
     totalGames: 0,
@@ -239,9 +227,28 @@ export async function initState(options?: SaveOptions): Promise<PersistedState> 
     try { plain = await aesDecrypt(plain); } catch {}
     // 尝试解压
     try { plain = await decompressString(plain); } catch {}
-    const parsed: PersistedState = JSON.parse(plain);
-    await verifyIntegrity(parsed);
-    return parsed;
+    const parsed: any = JSON.parse(plain);
+    const needsMigration = typeof parsed === 'object' && parsed !== null && ('excludedEntries' in parsed);
+    if (needsMigration) {
+      try { localStorage.removeItem(EXCLUDED_ENTRIES_KEY); } catch {}
+      delete parsed.excludedEntries;
+      parsed.excludedByCategory = parsed.excludedByCategory || {};
+      parsed.timestamp = Date.now();
+      const contentStr = JSON.stringify(buildContent(parsed as PersistedState));
+      parsed.integrity = {
+        checksum: await sha256(contentStr),
+        signature: await hmacSign(contentStr),
+        changeCount: (parsed.integrity?.changeCount || 0) + 1
+      };
+      let toSave = JSON.stringify({ ...buildContent(parsed as PersistedState), integrity: parsed.integrity });
+      if (options?.compress) toSave = await compressString(toSave);
+      if (options?.encrypt) toSave = await aesEncrypt(toSave);
+      safeSetItem(USER_STATE_KEY, toSave);
+      return parsed as PersistedState;
+    }
+    const parsedState: PersistedState = parsed as PersistedState;
+    await verifyIntegrity(parsedState);
+    return parsedState;
   } catch (error) {
     // 数据损坏：回滚到默认结构
     const fallback: PersistedState = { ...DEFAULT_STATE, timestamp: Date.now() };
@@ -426,32 +433,60 @@ export async function updateUserSettings(patch: Partial<UserSettings>, options?:
 }
 
 /**
- * 追加排除词条（本地 + 状态）
+ * 追加排除词条（按领域分类）
+ *
+ * 功能描述：
+ * - 将指定词条加入到当前领域的排除列表中，并刷新持久化校验。
+ * - 同步追加到旧本地键 `guess_the_entry_excluded_entries` 以兼容历史逻辑（不分领域）。
+ *
+ * 参数说明：
+ * - entry: 待排除的词条名称，类型为 `string`，自动去除首尾空白；为空时忽略。
+ * - category: 当前游戏选择的领域，类型为 `GameCategory`，用于按领域归类保存排除词。
+ *
+ * 返回值说明：
+ * - Promise<void> 无返回内容；持久化成功或忽略异常。
+ *
+ * 异常说明：
+ * - 持久化写入失败时会抛出 `AppError`（SAVE_FAILED）；旧键写入异常被吞掉以避免影响流程。
  */
 export async function addExcludedEntry(entry: string, category: GameCategory): Promise<void> {
   const name = (entry || '').trim();
   if (!name) return;
-  if (category === '随机') return;
   const state = await initState();
-  const list = state.excludedByCategory[category] ?? [];
-  const next = new Set<string>(list);
-  next.add(name);
-  state.excludedByCategory[category] = Array.from(next);
+  const categoryKey = normalizeCategoryKey(category);
+  const bucket = state.excludedByCategory?.[categoryKey] ?? [];
+  const set = new Set<string>(bucket);
+  set.add(name);
+  state.excludedByCategory = { ...(state.excludedByCategory ?? {}), [categoryKey]: Array.from(set) };
   const contentStr = JSON.stringify(buildContent(state));
   state.integrity.checksum = await sha256(contentStr);
   state.integrity.signature = await hmacSign(contentStr);
   state.integrity.changeCount += 1;
   safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
+  try { localStorage.removeItem(EXCLUDED_ENTRIES_KEY); } catch {}
 }
 
 /**
- * 获取排除词条列表（状态 + 旧键合并去重）
+ * 获取指定领域的排除词条列表
+ *
+ * 功能描述：
+ * - 返回当前领域下的排除词，合并历史的全局排除字段 `excludedEntries` 和旧本地键 `guess_the_entry_excluded_entries` 并去重。
+ *
+ * 参数说明：
+ * - category: 领域标识，类型为 `GameCategory | string`，用于选择对应的分类桶。
+ *
+ * 返回值说明：
+ * - Promise<string[]> 归并去重后的排除词数组。
+ *
+ * 异常说明：
+ * - 读取旧本地键异常将被忽略并返回当前可用集合。
  */
-export async function getExcludedEntries(category: GameCategory): Promise<string[]> {
-  if (category === '随机') return [];
+export async function getExcludedEntries(category: GameCategory | string): Promise<string[]> {
   const state = await initState();
-  const list = state.excludedByCategory[category] ?? [];
-  return Array.isArray(list) ? list : [];
+  const key = normalizeCategoryKey(category);
+  const bucket = state.excludedByCategory?.[key] ?? [];
+  try { localStorage.removeItem(EXCLUDED_ENTRIES_KEY); } catch {}
+  return bucket;
 }
 
 /**
@@ -546,4 +581,20 @@ export async function setUIPanels(patch: { quickRefOpen?: boolean; settingsOpen?
   state.integrity.signature = await hmacSign(contentStr);
   state.integrity.changeCount += 1;
   safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(state), integrity: state.integrity }));
+}
+function normalizeCategoryKey(category: GameCategory | string): string {
+  const s = String(category).toLowerCase();
+  switch (s) {
+    case '自然': return 'nature';
+    case '天文': return 'astronomy';
+    case '地理': return 'geography';
+    case '动漫': return 'anime';
+    case '影视': return 'movie';
+    case '游戏': return 'game';
+    case '体育': return 'sports';
+    case '历史': return 'history';
+    case 'acgn': return 'acgn';
+    case '随机': return 'random';
+    default: return s;
+  }
 }

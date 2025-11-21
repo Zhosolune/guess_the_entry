@@ -100,13 +100,8 @@ export function useGameState() {
     try {
       setGameState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const categoriesPool: GameCategory[] = ['自然','天文','地理','动漫','影视','游戏','体育','历史','ACGN'];
-      const actualCategory: GameCategory = category === '随机'
-        ? categoriesPool[Math.floor(Math.random() * categoriesPool.length)]
-        : category;
-
       // 生成词条
-      const response = await generateEntry(actualCategory);
+      const response = await generateEntry(category);
       // 开发模式打印原始返回，便于定位响应结构问题
       if (import.meta.env.MODE === 'development' || import.meta.env.VITE_DEBUG_API === '1') {
         console.debug('[Game/DEBUG] generateEntry:response', response);
@@ -121,7 +116,7 @@ export function useGameState() {
       const newGameState: GameState = {
         gameId: Date.now().toString(),
         gameStatus: 'playing',
-        category: actualCategory,
+        category,
         currentEntry: entryData,
         revealedChars: new Set(),
         guessedChars: new Set(),
@@ -185,7 +180,7 @@ export function useGameState() {
    * }
    * ```
    */
-  const handleGuess = useCallback((char: string) => {
+  const handleGuess = useCallback(async (char: string) => {
     if (gameState.gameStatus !== 'playing' || gameState.isLoading) {
       return { success: false, reason: '游戏未开始或已结束' };
     }
@@ -267,18 +262,21 @@ export function useGameState() {
 
       // 将本局词条加入排除列表并更新持久化统计
       const entryName = gameState.currentEntry?.entry || '';
-      addExcludedEntry(entryName, newGameState.category);
-      updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, percent: 100, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed })
-        .catch(e => {
-          console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
-        });
+      try { await addExcludedEntry(entryName, gameState.category); } catch (e) {
+        console.warn('追加排除词失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
+      }
+      try {
+        await updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, percent: 100, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed });
+      } catch (e) {
+        console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
+      }
     }
 
     setGameState(newGameState);
     
     // 保存游戏状态
     try {
-      saveGameState(newGameState);
+      await saveGameState(newGameState);
     } catch (storageError) {
       console.warn('游戏状态保存失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(storageError)));
     }
@@ -302,7 +300,7 @@ export function useGameState() {
    * 异常说明：
    * - 输入校验失败时抛出 ValidationError（非单字符或非中文字符）
    */
-  const handleHintSelectChar = useCallback((char: string) => {
+  const handleHintSelectChar = useCallback(async (char: string) => {
     if (gameState.gameStatus !== 'playing' || gameState.isLoading) {
       return { success: false, reason: '游戏未开始或已结束' };
     }
@@ -356,15 +354,20 @@ export function useGameState() {
         victoryCount: prev.victoryCount + 1
       }));
       const entryName = gameState.currentEntry?.entry || '';
-      addExcludedEntry(entryName, newGameState.category);
-      updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, percent: 100, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed })
-        .catch(e => {
-          console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
-        });
+      try {
+        await addExcludedEntry(entryName, gameState.category);
+      } catch (e) {
+        console.warn('追加排除词失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
+      }
+      try {
+        await updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, percent: 100, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed });
+      } catch (e) {
+        console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
+      }
     }
     setGameState(newGameState);
     try {
-      saveGameState(newGameState);
+      await saveGameState(newGameState);
     } catch (storageError) {
       console.warn('游戏状态保存失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(storageError)));
     }
