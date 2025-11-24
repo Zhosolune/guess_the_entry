@@ -76,10 +76,24 @@ async function handleGenerateEntry(request, env, corsHeaders) {
   }
 
   // 解析真实领域：当请求为“随机”时，随机选择一个实际领域
-  const REAL_CATEGORIES = ["自然","天文","地理","动漫","影视","游戏","体育","历史","ACGN"];
+  const REAL_CATEGORIES = [
+    "自然",
+    "天文",
+    "地理",
+    "动漫",
+    "影视",
+    "游戏",
+    "体育",
+    "历史",
+    "ACGN",
+  ];
   const reqCategory = (String(category) || "").trim();
-  const isRandom = reqCategory.toLowerCase() === "随机" || reqCategory.toLowerCase() === "random";
-  const resolvedCategory = isRandom ? REAL_CATEGORIES[Math.floor(Math.random() * REAL_CATEGORIES.length)] : reqCategory;
+  const isRandom =
+    reqCategory.toLowerCase() === "随机" ||
+    reqCategory.toLowerCase() === "random";
+  const resolvedCategory = isRandom
+    ? REAL_CATEGORIES[Math.floor(Math.random() * REAL_CATEGORIES.length)]
+    : reqCategory;
 
   // 检查缓存（fresh=1 时跳过缓存）
   const cacheKey = `entry:${resolvedCategory}`;
@@ -153,9 +167,10 @@ async function callDeepSeekAPI(category, env, excludeEntries = []) {
 3. 返回JSON格式：{"entry": "词条名称", "content": "百科内容", "category": "${category}"}
 4. 确保内容适合文字猜词游戏使用
 5. 尽量兼顾词条的时效性，最好选取近年间流传度较高的热点词条
+6. 避免抽象的概念或过于专业的术语
 ${
   listText
-    ? `6. 不得返回以下已猜过的词条：${listText}（与其精确匹配或仅去除空格/标点后的匹配均视为重复）\n如命中排除列表，请更换为同领域的不重复词条。`
+    ? `7. 不得返回以下已猜过的词条：${listText}（与其精确匹配或仅去除空格/标点后的匹配均视为重复）\n如命中排除列表，请更换为同领域的不重复词条。`
     : ""
 }`;
 
