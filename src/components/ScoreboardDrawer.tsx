@@ -164,7 +164,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
    * @returns SVG 雷达图，边缘主题色、内部主题色浅色填充
    */
   const RadarChart: React.FC<{ title: string; data: Record<string, number> }> = ({ title, data }) => {
-    const size = 280; const center = size / 2; const radius = center - 24;
+    const size = 320; const center = size / 2; const radius = center - 24;
     const cats = keys;
     const angleStep = (2 * Math.PI) / cats.length;
     const points = cats.map((k, idx) => {
@@ -175,6 +175,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
       const y = center + r * Math.sin(angle);
       return `${x},${y}`;
     }).join(' ');
+    const [hovered, setHovered] = useState(false);
     return (
       <div className="w-full">
         <div className="text-[var(--color-text-secondary)] mb-2 text-center">{title}</div>
@@ -193,11 +194,23 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
               return (
                 <g key={k}>
                   <line x1={center} y1={center} x2={x} y2={y} stroke="var(--color-border)" strokeWidth={0.5} />
-                  <text x={lx} y={ly} fill="var(--color-text)" fontSize="10" textAnchor="middle" alignmentBaseline="middle">{CATEGORIES[k as keyof typeof CATEGORIES]}</text>
+                  <text x={lx} y={ly} fill="var(--color-text)" fontSize="14" textAnchor="middle" alignmentBaseline="middle">{CATEGORIES[k as keyof typeof CATEGORIES]}</text>
                 </g>
               );
             })}
-            <polygon points={points} fill="var(--color-primary)" opacity={0.18} stroke="var(--color-primary)" strokeWidth={2} />
+            <g onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={{ transition: 'transform 160ms ease', transform: hovered ? 'scale(1.03)' : 'scale(1)', transformOrigin: '50% 50%' }}>
+              <polygon points={points} fill="var(--color-primary)" fillOpacity={0.18} stroke="var(--color-primary)" strokeWidth={2} />
+              {hovered && cats.map((k, idx) => {
+                const value = Math.max(0, Math.min((data[k] || 0), 100));
+                const r = (value / 100) * radius;
+                const angle = -Math.PI / 2 + idx * angleStep;
+                const vx = center + (r + 13) * Math.cos(angle);
+                const vy = center + (r + 13) * Math.sin(angle);
+                return (
+                  <text key={`val-${k}`} x={vx} y={vy} fill="var(--color-text)" fontSize="16" textAnchor="middle" alignmentBaseline="middle">{value}</text>
+                );
+              })}
+            </g>
           </svg>
         </div>
       </div>
@@ -242,9 +255,9 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
         onClick={stopPropagation}
       >
         <div className="w-full bg-[var(--color-surface)] border-b border-[var(--color-border)] max-h-[calc(100vh-var(--topbar-h)-var(--bottombar-h))] overflow-y-auto no-scrollbar">
-          <div className="max-w-2xl mx-auto p-4 section rounded-none min-h-[calc(15vh)]">
-            <div className="mb-4 justify-center flex"><ScoreBoardIcon /></div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
+          <div className="max-w-3xl mx-auto p-4 section rounded-none min-h-[calc(15vh)]">
+            <div className="mb-4 mx-auto max-w-2xl justify-center flex"><ScoreBoardIcon /></div>
+            <div className="max-w-2xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
               {metrics.map((m, idx) => (
                 <div key={idx} className="flex flex-col items-center justify-center py-2 rounded">
                   <div className="text-3xl font-semi leading-6 text-[var(--color-text)]">{m.value}</div>
