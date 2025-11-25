@@ -306,7 +306,10 @@ function getFallbackEntry(category: string): ApiResponse {
 export async function testApiConnection(): Promise<boolean> {
   try {
     const response = await apiClient.get('/api/health');
-    return response.data?.status === 'ok';
+    const data = response?.data ?? {};
+    const okStatus = data?.status === 'ok' || data?.status === 'healthy';
+    const deepseekOk = !!(data?.deepseek && data.deepseek.connected === true);
+    return okStatus || deepseekOk;
   } catch (error) {
     console.warn('API连接测试失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(error)));
     return false;
