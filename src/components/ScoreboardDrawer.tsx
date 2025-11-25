@@ -30,7 +30,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
   currentHintCount = 0,
   perfectVictory = false,
 }) => {
-  interface StatsItem { gameId: string; timeSpent?: number; attempts?: number; percent?: number; hintCount?: number; perfect?: boolean; category?: string }
+  interface StatsItem { gameId: string; timeSpent?: number; attempts?: number; percent?: number; hintCount?: number; perfect?: boolean; category?: string; correctCount?: number; wrongCount?: number }
   interface Aggregates { totalGames: number; totalSuccess: number; perfectSuccess: number; avgTimeSec: number; avgAttempts: number; avgProgress: number; avgHintCount: number }
 
   const [aggregates, setAggregates] = useState<Aggregates>({ totalGames: 0, totalSuccess: 0, perfectSuccess: 0, avgTimeSec: 0, avgAttempts: 0, avgProgress: 0, avgHintCount: 0 });
@@ -122,7 +122,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
   }, [keys]);
 
   const [abilityChartData, setAbilityChartData] = useState<Record<string, number>>(Object.fromEntries(keys.map(k => [k, 0])));
-  const [inclinationChartData, setInclinationChartData] = useState<Record<string, number>>(Object.fromEntries(keys.map(k => [k, 0])));
+  const [profileChartData, setProfileChartData] = useState<Record<string, number>>({ 速度: 0, 精度: 0, 独立: 0, 均衡: 0, 进度: 0 });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -135,25 +135,77 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
         const agg = buildCategoryAgg(timeList, attemptsList, percentList);
         const sumVictories = keys.reduce((acc, k) => acc + (agg[k]?.victories || 0), 0);
         const sumTime = keys.reduce((acc, k) => acc + (agg[k]?.totalTime || 0), 0);
-        const τ = 120; const α = 6; const β = 2;
+        const τ = 240; const α = 20; const β = 4;
         const ability: Record<string, number> = {};
-        const incline: Record<string, number> = {};
         keys.forEach((k) => {
           const a = agg[k];
-          const S_time = 100 * Math.exp(-(a.avgTime || 0) / τ);
-          const S_attempt = 100 * Math.exp(-(a.avgAttempts || 0) / α);
-          const S_hint = 100 * Math.exp(-(a.avgHints || 0) / β);
-          const S_prog = a.avgProgress;
-          const S_perf = a.perfectRate;
-          const Ability = 0.25 * S_prog + 0.25 * S_time + 0.20 * S_attempt + 0.15 * S_hint + 0.15 * S_perf;
-          const g = sumVictories > 0 ? (a.victories / sumVictories) : 0;
-          const t = sumTime > 0 ? (a.totalTime / sumTime) : 0;
-          const Inclination = 100 * (0.6 * g + 0.4 * t);
+          const hasTime = a.avgTime > 0;
+          const hasAttempts = a.avgAttempts > 0;
+          const hasProgress = a.avgProgress > 0;
+          const hasHints = a.avgHints > 0;
+          const hasPerf = a.perfectRate > 0;
+
+          const S_time = hasTime ? 100 * Math.exp(-a.avgTime / τ) : undefined;
+          const S_attempt = hasAttempts ? 100 * Math.exp(-a.avgAttempts / α) : undefined;
+          const S_hint = hasHints ? 100 * Math.exp(-a.avgHints / β) : undefined;
+          const S_prog = hasProgress ? a.avgProgress : undefined;
+          const S_perf = hasPerf ? a.perfectRate : undefined;
+
+          const weights: { key: string; w: number; v?: number }[] = [
+            { key: 'prog', w: 0.25, v: S_prog },
+            { key: 'time', w: 0.25, v: S_time },
+            { key: 'attempt', w: 0.20, v: S_attempt },
+            { key: 'hint', w: 0.15, v: S_hint },
+            { key: 'perf', w: 0.15, v: S_perf },
+          ];
+          const available = weights.filter(i => typeof i.v === 'number');
+          const wsum = available.reduce((s, i) => s + i.w, 0);
+          const Ability = wsum > 0 ? available.reduce((s, i) => s + (i.v as number) * i.w, 0) / wsum : 0;
           ability[k] = Math.round(Math.max(0, Math.min(Ability, 100)));
-          incline[k] = Math.round(Math.max(0, Math.min(Inclination, 100)));
         });
         setAbilityChartData(ability);
-        setInclinationChartData(incline);
+        const avgTimeSecLocal = timeList.length ? Math.round((timeList.reduce((sum, i) => sum + (i.timeSpent || 0), 0)) / timeList.length) : 0;
+        const completedGameIdsLocal = new Set(percentList.map(i => i.gameId));
+        const attemptsOnCompletedLocal = attemptsList.filter(i => completedGameIdsLocal.has(i.gameId));
+        const avgAttemptsLocal = attemptsOnCompletedLocal.length ? Math.round((attemptsOnCompletedLocal.reduce((sum, i) => sum + (i.attempts || 0), 0)) / attemptsOnCompletedLocal.length) : 0;
+        const avgProgressLocal = percentList.length ? Math.round((percentList.reduce((sum, i) => sum + ((100 - i.percent) || 0), 0)) / percentList.length) : 0;
+        const hintedLocal = percentList.filter(i => typeof i.hintCount === 'number' && (i.hintCount as number) > 0);
+        const avgHintCountLocal = hintedLocal.length ? Number((hintedLocal.reduce((sum, i) => sum + (i.hintCount || 0), 0) / hintedLocal.length).toFixed(2)) : 0;
+        const perfectSuccessLocal = percentList.filter(i => i.perfect === true).length;
+        const totalSuccessLocal = percentList.length;
+        const speed = avgTimeSecLocal > 0 ? Math.min(100, Math.max(0, 100 * Math.exp(-avgTimeSecLocal / τ))) : 0;
+        let sumCorrect = attemptsList.reduce((sum, i) => sum + (i.correctCount || 0), 0);
+        let sumWrong = attemptsList.reduce((sum, i) => sum + (i.wrongCount || 0), 0);
+        if ((sumCorrect + sumWrong) === 0 && s.lastGame) {
+          const last: any = s.lastGame;
+          sumCorrect = Array.isArray(last.guessedChars) ? last.guessedChars.length : 0;
+          sumWrong = Array.isArray(last.graveyard) ? last.graveyard.length : 0;
+        }
+        const accuracy = (sumCorrect + sumWrong) > 0 ? Math.round(100 * (sumCorrect / (sumCorrect + sumWrong))) : 0;
+        const hintDiscipline = avgHintCountLocal > 0 ? Math.min(100, Math.max(0, 100 * Math.exp(-avgHintCountLocal / β))) : 0;
+        // 均衡度 = 领域丰富度（香农熵归一）与成绩均衡度（能力变异系数的反向）综合
+        const victoryCounts = keys.map(k => (agg[k]?.victories || 0));
+        const sumVictoriesLocal2 = victoryCounts.reduce((s, v) => s + v, 0);
+        let richnessEntropy = 0;
+        if (sumVictoriesLocal2 > 0 && keys.length > 0) {
+          const p = victoryCounts.map(v => v / sumVictoriesLocal2).filter(pi => pi > 0);
+          const H = -p.reduce((s, pi) => s + pi * Math.log(pi), 0);
+          const Hnorm = Math.log(keys.length) > 0 ? (H / Math.log(keys.length)) : 0;
+          richnessEntropy = 100 * Math.max(0, Math.min(Hnorm, 1));
+        }
+        const abilityValsForBalanced = keys.filter(k => (agg[k]?.victories || 0) > 0 && typeof ability[k] === 'number').map(k => ability[k]);
+        let balanceAbility = 0;
+        if (abilityValsForBalanced.length > 0) {
+          const meanA = abilityValsForBalanced.reduce((s, v) => s + v, 0) / abilityValsForBalanced.length;
+          if (meanA > 0) {
+            const stdA = Math.sqrt(abilityValsForBalanced.reduce((s, v) => s + Math.pow(v - meanA, 2), 0) / abilityValsForBalanced.length);
+            const cv = stdA / meanA; // 变异系数
+            balanceAbility = 100 * (1 - Math.min(1, cv));
+          }
+        }
+        const balance = Math.round(Math.max(0, Math.min(100, (richnessEntropy + balanceAbility) / 2)));
+        const progress = avgProgressLocal || 0;
+        setProfileChartData({ 速度: Math.round(speed), 精度: accuracy, 独立: Math.round(hintDiscipline), 均衡: balance, 进度: Math.round(progress) });
       } catch {}
     })();
   }, [isOpen, buildCategoryAgg, keys]);
@@ -166,7 +218,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
    */
   const RadarChart: React.FC<{ title: string; data: Record<string, number> }> = ({ title, data }) => {
     const size = 320; const center = size / 2; const radius = center - 24;
-    const cats = keys;
+    const cats = Object.keys(data);
     const angleStep = (2 * Math.PI) / cats.length;
     const points = cats.map((k, idx) => {
       const value = Math.max(0, Math.min((data[k] || 0), 100));
@@ -195,7 +247,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
               return (
                 <g key={k}>
                   <line x1={center} y1={center} x2={x} y2={y} stroke="var(--color-border)" strokeWidth={0.5} />
-                  <text x={lx} y={ly} fill="var(--color-text)" fontSize="14" textAnchor="middle" alignmentBaseline="middle">{CATEGORIES[k as keyof typeof CATEGORIES]}</text>
+                  <text x={lx} y={ly} fill="var(--color-text)" fontSize="14" textAnchor="middle" alignmentBaseline="middle">{(CATEGORIES as Record<string, string>)[k] ?? k}</text>
                 </g>
               );
             })}
@@ -268,10 +320,10 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
             </div>
 
             <div className="mt-4 p-4">  { /*  bg-[var(--color-surface-2)] */}
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <RadarChart title="领域能力" data={abilityChartData} />
-              <RadarChart title="领域倾向" data={inclinationChartData} />
-            </div>
+  <div className="grid grid-cols-1 md:grid-cols-2">
+    <RadarChart title="领域能力" data={abilityChartData} />
+    <RadarChart title="玩家能力五维" data={profileChartData} />
+  </div>
             </div>
           </div>
 
