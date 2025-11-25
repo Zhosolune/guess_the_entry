@@ -30,7 +30,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
   currentHintCount = 0,
   perfectVictory = false,
 }) => {
-  interface StatsItem { gameId: string; timeSpent?: number; attempts?: number; percent?: number; hintCount?: number; perfect?: boolean; category?: string; correctCount?: number; wrongCount?: number }
+  interface GameRecord { gameId: string; entry: string; category: string; attempts: number; hitCount: number; wrongCount: number; hintCount: number; timeSpentSec: number; victoryProgress: number; perfect: boolean; timestamp: number; date: string }
   interface Aggregates { totalGames: number; totalSuccess: number; perfectSuccess: number; avgTimeSec: number; avgAttempts: number; avgProgress: number; avgHintCount: number }
 
   const [aggregates, setAggregates] = useState<Aggregates>({ totalGames: 0, totalSuccess: 0, perfectSuccess: 0, avgTimeSec: 0, avgAttempts: 0, avgProgress: 0, avgHintCount: 0 });
@@ -42,16 +42,12 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
         const s = await initState();
         const totalGames = s.stats.totalGames || 0;
         const totalSuccess = s.stats.totalSuccess || 0;
-        const timeList = (s.stats.gameTime || []) as StatsItem[];
-        const attemptsList = (s.stats.attempts || []) as StatsItem[];
-        const percentList = (s.stats.completionPercent || []) as StatsItem[];
-        const perfectSuccess = percentList.filter(i => i.perfect === true).length;
-        const avgTimeSec = timeList.length ? Math.round((timeList.reduce((sum, i) => sum + (i.timeSpent || 0), 0)) / timeList.length) : 0;
-        const completedGameIds = new Set(percentList.map(i => i.gameId));
-        const attemptsOnCompleted = attemptsList.filter(i => completedGameIds.has(i.gameId));
-        const avgAttempts = attemptsOnCompleted.length ? Math.round((attemptsOnCompleted.reduce((sum, i) => sum + (i.attempts || 0), 0)) / attemptsOnCompleted.length) : 0;
-        const avgProgress = percentList.length ? Math.round((percentList.reduce((sum, i) => sum + (i.percent || 0), 0)) / percentList.length) : 0;
-        const hinted = percentList.filter(i => typeof i.hintCount === 'number' && (i.hintCount as number) > 0);
+        const records = (s.stats.records || []) as GameRecord[];
+        const perfectSuccess = records.filter(i => i.perfect === true).length;
+        const avgTimeSec = records.length ? Math.round((records.reduce((sum, i) => sum + (i.timeSpentSec || 0), 0)) / records.length) : 0;
+        const avgAttempts = records.length ? Math.round((records.reduce((sum, i) => sum + (i.attempts || 0), 0)) / records.length) : 0;
+        const avgProgress = records.length ? Math.round((records.reduce((sum, i) => sum + (i.victoryProgress || 0), 0)) / records.length) : 0;
+        const hinted = records.filter(i => typeof i.hintCount === 'number' && (i.hintCount as number) > 0);
         const avgHintCount = hinted.length ? Number((hinted.reduce((sum, i) => sum + (i.hintCount || 0), 0) / hinted.length).toFixed(2)) : 0;
         setAggregates({ totalGames, totalSuccess, perfectSuccess, avgTimeSec, avgAttempts, avgProgress, avgHintCount });
       } catch {}
@@ -93,29 +89,21 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
    * @param percentList 每局通关进度列表（含领域、提示次数、完美标记）
    * @returns 各领域聚合指标映射
    */
-  const buildCategoryAgg = useCallback((timeList: StatsItem[], attemptsList: StatsItem[], percentList: StatsItem[]) => {
+  const buildCategoryAgg = useCallback((records: GameRecord[]) => {
     const init = Object.fromEntries(keys.map((k) => [k, { victories: 0, avgTime: 0, avgAttempts: 0, avgProgress: 0, avgHints: 0, perfectRate: 0, totalTime: 0 }]));
     const grouped: Record<string, { victories: number; avgTime: number; avgAttempts: number; avgProgress: number; avgHints: number; perfectRate: number; totalTime: number }> = init as any;
-    const byCat = (arr: StatsItem[]) => {
-      const m: Record<string, StatsItem[]> = Object.fromEntries(keys.map((k) => [k, []]));
-      arr.forEach(i => { const cat = (i.category || '') as string; if (keys.includes(cat)) m[cat].push(i); });
-      return m;
-    };
-    const tBy = byCat(timeList);
-    const aBy = byCat(attemptsList);
-    const pBy = byCat(percentList);
+    const byCat: Record<string, GameRecord[]> = Object.fromEntries(keys.map((k) => [k, []]));
+    records.forEach(i => { const cat = (i.category || '') as string; if (keys.includes(cat)) byCat[cat].push(i); });
     keys.forEach((k) => {
-      const t = tBy[k];
-      const a = aBy[k];
-      const p = pBy[k];
-      const victories = p.length;
-      const avgTime = t.length ? Math.round(t.reduce((s, i) => s + (i.timeSpent || 0), 0) / t.length) : 0;
-      const totalTime = t.reduce((s, i) => s + (i.timeSpent || 0), 0);
-      const avgAttempts = a.length ? Math.round(a.reduce((s, i) => s + (i.attempts || 0), 0) / a.length) : 0;
-      const avgProgress = p.length ? Math.round(p.reduce((s, i) => s + (i.percent || 0), 0) / p.length) : 0;
-      const hinted = p.filter(i => typeof i.hintCount === 'number');
+      const list = byCat[k];
+      const victories = list.length;
+      const avgTime = list.length ? Math.round(list.reduce((s, i) => s + (i.timeSpentSec || 0), 0) / list.length) : 0;
+      const totalTime = list.reduce((s, i) => s + (i.timeSpentSec || 0), 0);
+      const avgAttempts = list.length ? Math.round(list.reduce((s, i) => s + (i.attempts || 0), 0) / list.length) : 0;
+      const avgProgress = list.length ? Math.round(list.reduce((s, i) => s + (i.victoryProgress || 0), 0) / list.length) : 0;
+      const hinted = list.filter(i => typeof i.hintCount === 'number');
       const avgHints = hinted.length ? Number((hinted.reduce((s, i) => s + (i.hintCount || 0), 0) / hinted.length).toFixed(2)) : 0;
-      const perfectRate = p.length ? Math.round((p.filter(i => i.perfect === true).length / p.length) * 100) : 0;
+      const perfectRate = list.length ? Math.round((list.filter(i => i.perfect === true).length / list.length) * 100) : 0;
       grouped[k] = { victories, avgTime, avgAttempts, avgProgress, avgHints, perfectRate, totalTime };
     });
     return grouped;
@@ -129,10 +117,8 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
     (async () => {
       try {
         const s = await initState();
-        const timeList = (s.stats.gameTime || []) as StatsItem[];
-        const attemptsList = (s.stats.attempts || []) as StatsItem[];
-        const percentList = (s.stats.completionPercent || []) as StatsItem[];
-        const agg = buildCategoryAgg(timeList, attemptsList, percentList);
+        const records = (s.stats.records || []) as GameRecord[];
+        const agg = buildCategoryAgg(records);
         const sumVictories = keys.reduce((acc, k) => acc + (agg[k]?.victories || 0), 0);
         const sumTime = keys.reduce((acc, k) => acc + (agg[k]?.totalTime || 0), 0);
         const τ = 240; const α = 20; const β = 4;
@@ -164,25 +150,20 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
           ability[k] = Math.round(Math.max(0, Math.min(Ability, 100)));
         });
         setAbilityChartData(ability);
-        const avgTimeSecLocal = timeList.length ? Math.round((timeList.reduce((sum, i) => sum + (i.timeSpent || 0), 0)) / timeList.length) : 0;
-        const completedGameIdsLocal = new Set(percentList.map(i => i.gameId));
-        const attemptsOnCompletedLocal = attemptsList.filter(i => completedGameIdsLocal.has(i.gameId));
-        const avgAttemptsLocal = attemptsOnCompletedLocal.length ? Math.round((attemptsOnCompletedLocal.reduce((sum, i) => sum + (i.attempts || 0), 0)) / attemptsOnCompletedLocal.length) : 0;
-        const avgProgressLocal = percentList.length ? Math.round((percentList.reduce((sum, i) => sum + ((100 - i.percent) || 0), 0)) / percentList.length) : 0;
-        const hintedLocal = percentList.filter(i => typeof i.hintCount === 'number' && (i.hintCount as number) > 0);
+        const avgTimeSecLocal = records.length ? Math.round((records.reduce((sum, i) => sum + (i.timeSpentSec || 0), 0)) / records.length) : 0;
+        const avgAttemptsLocal = records.length ? Math.round((records.reduce((sum, i) => sum + (i.attempts || 0), 0)) / records.length) : 0;
+        const avgProgressLocal = records.length ? Math.round((records.reduce((sum, i) => sum + (i.victoryProgress || 0), 0)) / records.length) : 0;
+        const hintedLocal = records.filter(i => typeof i.hintCount === 'number');
         const avgHintCountLocal = hintedLocal.length ? Number((hintedLocal.reduce((sum, i) => sum + (i.hintCount || 0), 0) / hintedLocal.length).toFixed(2)) : 0;
-        const perfectSuccessLocal = percentList.filter(i => i.perfect === true).length;
-        const totalSuccessLocal = percentList.length;
+        const perfectSuccessLocal = records.filter(i => i.perfect === true).length;
+        const totalSuccessLocal = records.length;
         const speed = avgTimeSecLocal > 0 ? Math.min(100, Math.max(0, 100 * Math.exp(-avgTimeSecLocal / τ))) : 0;
-        let sumCorrect = attemptsList.reduce((sum, i) => sum + (i.correctCount || 0), 0);
-        let sumWrong = attemptsList.reduce((sum, i) => sum + (i.wrongCount || 0), 0);
-        if ((sumCorrect + sumWrong) === 0 && s.lastGame) {
-          const last: any = s.lastGame;
-          sumCorrect = Array.isArray(last.guessedChars) ? last.guessedChars.length : 0;
-          sumWrong = Array.isArray(last.graveyard) ? last.graveyard.length : 0;
-        }
+        const sumCorrect = records.reduce((sum, i) => sum + (i.hitCount || 0), 0);
+        const sumWrong = records.reduce((sum, i) => sum + (i.wrongCount || 0), 0);
         const accuracy = (sumCorrect + sumWrong) > 0 ? Math.round(100 * (sumCorrect / (sumCorrect + sumWrong))) : 0;
-        const hintDiscipline = avgHintCountLocal > 0 ? Math.min(100, Math.max(0, 100 * Math.exp(-avgHintCountLocal / β))) : 0;
+        const hintDiscipline = avgHintCountLocal === 0
+          ? 100
+          : Math.min(100, Math.max(0, 100 * Math.exp(-avgHintCountLocal / β)));
         // 均衡度 = 领域丰富度（香农熵归一）与成绩均衡度（能力变异系数的反向）综合
         const victoryCounts = keys.map(k => (agg[k]?.victories || 0));
         const sumVictoriesLocal2 = victoryCounts.reduce((s, v) => s + v, 0);
@@ -204,8 +185,9 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
           }
         }
         const balance = Math.round(Math.max(0, Math.min(100, (richnessEntropy + balanceAbility) / 2)));
-        const progress = avgProgressLocal || 0;
-        setProfileChartData({ 速度: Math.round(speed), 精度: accuracy, 独立: Math.round(hintDiscipline), 均衡: balance, 进度: Math.round(progress) });
+        const progressInv = 5 + 95 * (1 - (avgProgressLocal / 100));
+        const progressScore = Math.max(1, Math.min(99, Math.round(progressInv)));
+        setProfileChartData({ 速度: Math.round(speed), 精度: accuracy, 独立: Math.round(hintDiscipline), 均衡: balance, 进度: progressScore });
       } catch {}
     })();
   }, [isOpen, buildCategoryAgg, keys]);
@@ -217,7 +199,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
    * @returns SVG 雷达图，边缘主题色、内部主题色浅色填充
    */
   const RadarChart: React.FC<{ title: string; data: Record<string, number> }> = ({ title, data }) => {
-    const size = 320; const center = size / 2; const radius = center - 24;
+    const size = 320; const center = size / 2; const radius = center - 32;
     const cats = Object.keys(data);
     const angleStep = (2 * Math.PI) / cats.length;
     const points = cats.map((k, idx) => {
@@ -242,8 +224,8 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
               const angle = -Math.PI / 2 + idx * angleStep;
               const x = center + radius * Math.cos(angle);
               const y = center + radius * Math.sin(angle);
-              const lx = center + (radius + 12) * Math.cos(angle);
-              const ly = center + (radius + 12) * Math.sin(angle);
+              const lx = center + (radius + 16) * Math.cos(angle);
+              const ly = center + (radius + 16) * Math.sin(angle);
               return (
                 <g key={k}>
                   <line x1={center} y1={center} x2={x} y2={y} stroke="var(--color-border)" strokeWidth={0.5} />
@@ -257,8 +239,9 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
                 const value = Math.max(0, Math.min((data[k] || 0), 100));
                 const r = (value / 100) * radius;
                 const angle = -Math.PI / 2 + idx * angleStep;
-                const vx = center + (r + 13) * Math.cos(angle);
-                const vy = center + (r + 13) * Math.sin(angle);
+                const labelR = Math.min(radius - 20, r + 13);
+                const vx = center + labelR * Math.cos(angle);
+                const vy = center + labelR * Math.sin(angle);
                 return (
                   <text key={`val-${k}`} x={vx} y={vy} fill="var(--color-text)" fontSize="16" textAnchor="middle" alignmentBaseline="middle">{value}</text>
                 );
@@ -322,7 +305,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
             <div className="mt-4 p-4">  { /*  bg-[var(--color-surface-2)] */}
   <div className="grid grid-cols-1 md:grid-cols-2">
     <RadarChart title="领域能力" data={abilityChartData} />
-    <RadarChart title="玩家能力五维" data={profileChartData} />
+    <RadarChart title="玩家五维" data={profileChartData} />
   </div>
             </div>
           </div>

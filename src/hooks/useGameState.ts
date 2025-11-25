@@ -275,7 +275,7 @@ export function useGameState() {
         const revealedPositions = entryChars.filter(c => !isPunctuation(c) && newGameState.revealedChars.has(c)).length
           + encyChars.filter(c => !isPunctuation(c) && newGameState.revealedChars.has(c)).length;
         const percentAtVictory = totalPositions > 0 ? Math.round((revealedPositions / totalPositions) * 100) : 0;
-        await updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, category: gameState.category, percent: percentAtVictory, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed, correctCount: newGameState.guessedChars.size, wrongCount: newGameState.graveyard.length });
+        await updateGameStats({ gameId: newGameState.gameId, entry: entryName, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, category: gameState.category, percent: percentAtVictory, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed, correctCount: newGameState.guessedChars.size, wrongCount: newGameState.graveyard.length });
       } catch (e) {
         console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
       }
@@ -376,7 +376,7 @@ export function useGameState() {
         const revealedPositions = entryChars.filter(c => !isPunctuation(c) && newGameState.revealedChars.has(c)).length
           + encyChars.filter(c => !isPunctuation(c) && newGameState.revealedChars.has(c)).length;
         const percentAtVictory = totalPositions > 0 ? Math.round((revealedPositions / totalPositions) * 100) : 0;
-        await updateGameStats({ gameId: newGameState.gameId, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, category: gameState.category, percent: percentAtVictory, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed, correctCount: newGameState.guessedChars.size, wrongCount: newGameState.graveyard.length });
+        await updateGameStats({ gameId: newGameState.gameId, entry: entryName, timeSpent: Math.floor(gameTime / 1000), attempts: newGameState.attempts, category: gameState.category, percent: percentAtVictory, hintCount: newGameState.hintCount, perfect: !newGameState.hintUsed, correctCount: newGameState.guessedChars.size, wrongCount: newGameState.graveyard.length });
       } catch (e) {
         console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
       }

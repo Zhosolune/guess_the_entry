@@ -2,20 +2,23 @@ import { GameState, GameCategory } from '../types/game.types';
 import { toEnglishKey } from './categoryMapper';
 import { AppError, ErrorType } from '../utils/errorHandler';
 
-const USER_STATE_KEY = 'guess_the_entry_user_state_v1';
+const USER_STATE_KEY = 'guess_the_entry_user_state';
 const SECRET_STORAGE_KEY = 'guess_the_entry_state_secret';
 const EXCLUDED_ENTRIES_KEY = 'guess_the_entry_excluded_entries';
 
-export interface PersistedStatsItem {
+export interface GameRecord {
   gameId: string;
-  timeSpent?: number;
-  attempts?: number;
-  percent?: number;
-  hintCount?: number;
-  perfect?: boolean;
-  category?: GameCategory;
-  correctCount?: number;
-  wrongCount?: number;
+  entry: string;
+  category: GameCategory;
+  attempts: number;
+  hitCount: number;
+  wrongCount: number;
+  hintCount: number;
+  timeSpentSec: number;
+  victoryProgress: number;
+  perfect: boolean;
+  timestamp: number;
+  date: string;
 }
 
 export interface UserSettings {
@@ -32,9 +35,7 @@ export interface PersistedState {
   stats: {
     totalSuccess: number;
     totalGames: number;
-    gameTime: PersistedStatsItem[];
-    attempts: PersistedStatsItem[];
-    completionPercent: PersistedStatsItem[];
+    records: GameRecord[];
   };
   integrity: {
     checksum: string;
@@ -59,9 +60,7 @@ const DEFAULT_STATE: PersistedState = {
   stats: {
     totalSuccess: 0,
     totalGames: 0,
-    gameTime: [],
-    attempts: [],
-    completionPercent: []
+    records: []
   },
   integrity: { checksum: '', signature: undefined, changeCount: 0 },
   apiUsage: {},
@@ -251,6 +250,41 @@ export async function initState(options?: SaveOptions): Promise<PersistedState> 
       return parsed as PersistedState;
     }
     const parsedState: PersistedState = parsed as PersistedState;
+    // 将旧版 stats 中的 gameTime/attempts/completionPercent 合并为 records
+    const legacyStats: any = (parsedState as any).stats;
+    if (legacyStats && (!Array.isArray(legacyStats.records))) {
+      const timeList = Array.isArray(legacyStats.gameTime) ? legacyStats.gameTime : [];
+      const attemptsList = Array.isArray(legacyStats.attempts) ? legacyStats.attempts : [];
+      const percentList = Array.isArray(legacyStats.completionPercent) ? legacyStats.completionPercent : [];
+      const byId: Record<string, Partial<GameRecord>> = {};
+      const setRec = (id: string, patch: Partial<GameRecord>) => { byId[id] = { ...(byId[id] || {}), ...patch }; };
+      timeList.forEach((t: any) => { if (t?.gameId) setRec(String(t.gameId), { gameId: String(t.gameId), timeSpentSec: Number(t.timeSpent || 0), category: t.category as GameCategory }); });
+      attemptsList.forEach((a: any) => { if (a?.gameId) setRec(String(a.gameId), { gameId: String(a.gameId), attempts: Number(a.attempts || 0), hitCount: Number(a.correctCount || 0), wrongCount: Number(a.wrongCount || 0), category: a.category as GameCategory }); });
+      percentList.forEach((p: any) => { if (p?.gameId) setRec(String(p.gameId), { gameId: String(p.gameId), victoryProgress: Number(p.percent || 0), hintCount: Number(p.hintCount || 0), perfect: !!p.perfect, category: p.category as GameCategory }); });
+      const nowTs = Date.now();
+      const records: GameRecord[] = Object.values(byId).map((r) => {
+        const ts = nowTs;
+        const dateStr = new Date(ts).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+        return {
+          gameId: String(r.gameId || ''),
+          entry: String((parsedState.lastGame && (parsedState.lastGame as any).currentEntry?.entry) || ''),
+          category: (r.category as GameCategory) || (parsedState.lastGame?.category as GameCategory),
+          attempts: Number(r.attempts || 0),
+          hitCount: Number(r.hitCount || 0),
+          wrongCount: Number(r.wrongCount || 0),
+          hintCount: Number(r.hintCount || 0),
+          timeSpentSec: Number(r.timeSpentSec || 0),
+          victoryProgress: Number(r.victoryProgress || 0),
+          perfect: !!r.perfect,
+          timestamp: ts,
+          date: dateStr
+        };
+      });
+      parsedState.stats = { totalSuccess: Number(legacyStats.totalSuccess || 0), totalGames: Number(legacyStats.totalGames || 0), records };
+      const contentStrMigrated = JSON.stringify(buildContent(parsedState));
+      parsedState.integrity = { checksum: await sha256(contentStrMigrated), signature: await hmacSign(contentStrMigrated), changeCount: (parsedState.integrity?.changeCount || 0) + 1 };
+      safeSetItem(USER_STATE_KEY, JSON.stringify({ ...buildContent(parsedState), integrity: parsedState.integrity }));
+    }
     if (parsedState?.excludedByCategory && parsedState.excludedByCategory['random']) {
       delete parsedState.excludedByCategory['random'];
       const contentStr2 = JSON.stringify(buildContent(parsedState));
@@ -320,12 +354,6 @@ export async function saveGameState(gameState: GameState, options?: SaveOptions)
     timestamp: Date.now(),
     lastGame: serializeGameState(gameState)
   };
-  // 记录进行中的游戏尝试计数（方便恢复场景显示）
-  const item: PersistedStatsItem = { gameId: gameState.gameId, attempts: gameState.attempts };
-  // 将 attempts 追加或更新最后一条
-  const idx = next.stats.attempts.findIndex(s => s.gameId === gameState.gameId);
-  if (idx >= 0) next.stats.attempts[idx] = { ...next.stats.attempts[idx], attempts: gameState.attempts };
-  else next.stats.attempts.push(item);
   const contentStr = JSON.stringify(buildContent(next));
   next.integrity.checksum = await sha256(contentStr);
   next.integrity.signature = await hmacSign(contentStr);
@@ -508,13 +536,27 @@ export async function getExcludedEntries(category: GameCategory | string): Promi
 /**
  * 在胜利后更新统计信息
  */
-export async function updateGameStats(input: { gameId: string; timeSpent: number; attempts: number; category: GameCategory; percent?: number; hintCount?: number; perfect?: boolean; correctCount?: number; wrongCount?: number }): Promise<void> {
+export async function updateGameStats(input: { gameId: string; entry: string; timeSpent: number; attempts: number; category: GameCategory; percent?: number; hintCount?: number; perfect?: boolean; correctCount?: number; wrongCount?: number }): Promise<void> {
   const state = await initState();
   state.stats.totalGames += 1;
   state.stats.totalSuccess += 1;
-  state.stats.gameTime.push({ gameId: input.gameId, timeSpent: input.timeSpent, category: input.category });
-  state.stats.attempts.push({ gameId: input.gameId, attempts: input.attempts, category: input.category, correctCount: input.correctCount, wrongCount: input.wrongCount });
-  state.stats.completionPercent.push({ gameId: input.gameId, percent: input.percent ?? 100, hintCount: input.hintCount, perfect: input.perfect, category: input.category });
+  const ts = Date.now();
+  const dateStr = new Date(ts).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+  const rec: GameRecord = {
+    gameId: input.gameId,
+    entry: input.entry || '',
+    category: input.category,
+    attempts: input.attempts,
+    hitCount: Number(input.correctCount || 0),
+    wrongCount: Number(input.wrongCount || 0),
+    hintCount: Number(input.hintCount || 0),
+    timeSpentSec: Number(input.timeSpent || 0),
+    victoryProgress: Number(input.percent ?? 100),
+    perfect: !!input.perfect,
+    timestamp: ts,
+    date: dateStr
+  };
+  state.stats.records.push(rec);
   state.timestamp = Date.now();
   const contentStr = JSON.stringify(buildContent(state));
   state.integrity.checksum = await sha256(contentStr);
