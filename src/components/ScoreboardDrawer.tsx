@@ -118,6 +118,11 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
       try {
         const s = await initState();
         const records = (s.stats.records || []) as GameRecord[];
+        if (records.length === 0) {
+          setAbilityChartData(Object.fromEntries(keys.map(k => [k, 0])));
+          setProfileChartData({ 速度: 0, 精度: 0, 独立: 0, 均衡: 0, 进度: 0 });
+          return;
+        }
         const agg = buildCategoryAgg(records);
         const sumVictories = keys.reduce((acc, k) => acc + (agg[k]?.victories || 0), 0);
         const sumTime = keys.reduce((acc, k) => acc + (agg[k]?.totalTime || 0), 0);
@@ -152,7 +157,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
         setAbilityChartData(ability);
         const avgTimeSecLocal = records.length ? Math.round((records.reduce((sum, i) => sum + (i.timeSpentSec || 0), 0)) / records.length) : 0;
         const avgAttemptsLocal = records.length ? Math.round((records.reduce((sum, i) => sum + (i.attempts || 0), 0)) / records.length) : 0;
-        const avgProgressLocal = records.length ? Math.round((records.reduce((sum, i) => sum + (i.victoryProgress || 0), 0)) / records.length) : 0;
+        const avgProgressLocal = records.length ? Math.round((records.reduce((sum, i) => sum + ((100 - i.victoryProgress) || 0), 0)) / records.length) : 0;
         const hintedLocal = records.filter(i => typeof i.hintCount === 'number');
         const avgHintCountLocal = hintedLocal.length ? Number((hintedLocal.reduce((sum, i) => sum + (i.hintCount || 0), 0) / hintedLocal.length).toFixed(2)) : 0;
         const perfectSuccessLocal = records.filter(i => i.perfect === true).length;
@@ -161,9 +166,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
         const sumCorrect = records.reduce((sum, i) => sum + (i.hitCount || 0), 0);
         const sumWrong = records.reduce((sum, i) => sum + (i.wrongCount || 0), 0);
         const accuracy = (sumCorrect + sumWrong) > 0 ? Math.round(100 * (sumCorrect / (sumCorrect + sumWrong))) : 0;
-        const hintDiscipline = avgHintCountLocal === 0
-          ? 100
-          : Math.min(100, Math.max(0, 100 * Math.exp(-avgHintCountLocal / β)));
+        const hintDiscipline = Math.min(100, Math.max(0, 100 * Math.exp(-avgHintCountLocal / β)));
         // 均衡度 = 领域丰富度（香农熵归一）与成绩均衡度（能力变异系数的反向）综合
         const victoryCounts = keys.map(k => (agg[k]?.victories || 0));
         const sumVictoriesLocal2 = victoryCounts.reduce((s, v) => s + v, 0);
@@ -185,8 +188,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
           }
         }
         const balance = Math.round(Math.max(0, Math.min(100, (richnessEntropy + balanceAbility) / 2)));
-        const progressInv = 5 + 95 * (1 - (avgProgressLocal / 100));
-        const progressScore = Math.max(1, Math.min(99, Math.round(progressInv)));
+        const progressScore = Math.round(avgProgressLocal);
         setProfileChartData({ 速度: Math.round(speed), 精度: accuracy, 独立: Math.round(hintDiscipline), 均衡: balance, 进度: progressScore });
       } catch {}
     })();
