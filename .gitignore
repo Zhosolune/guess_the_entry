@@ -25,3 +25,8 @@ dist-ssr
 # Cloudflare local secrets (do not commit)
 cloudflare/.dev.vars
 cloudflare/
+
+# Environment variables
+.env
+.env.*
+!.env.example

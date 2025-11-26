@@ -29,15 +29,16 @@ async function getApiKey(): Promise<string | null> {
     return localKey.trim();
   }
   
-  const envKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
-  if (envKey && envKey.trim()) {
-    return envKey.trim();
-  }
+  // 移除直接从前端环境变量读取 Key 的逻辑，避免 Key 被打包进前端代码
+  // const envKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
+  // if (envKey && envKey.trim()) {
+  //   return envKey.trim();
+  // }
 
   // 检查是否通过了网站验证（邀请码）
   const verified = localStorage.getItem('site_verification_passed') === 'true';
   if (verified) {
-    // 返回空字符串，表示需要后端代理注入
+    // 返回空字符串，表示需要后端代理注入（本地Vite Proxy 或 Vercel Function）
     return '';
   }
 
