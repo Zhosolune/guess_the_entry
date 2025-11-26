@@ -138,12 +138,26 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               {/* API 设置 */}
               <div>
                 <div className="text-[var(--color-text)] mb-2 font-medium">API 设置 (DeepSeek)</div>
-                <div className="relative">
+                <form 
+                  className="relative"
+                  onSubmit={(e) => e.preventDefault()}
+                  autoComplete="off"
+                >
+                  <input
+                    type="text"
+                    name="deepseek-username"
+                    autoComplete="username"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }}
+                  />
                   <input
                     type={showKey ? "text" : "password"}
                     value={apiKey}
                     onChange={handleApiKeyChange}
                     placeholder="输入 API Key (sk-...)"
+                    autoComplete="new-password"
+                    name="deepseek-api-key"
                     className="w-full px-2 py-1 text-sm bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[var(--color-primary)] text-[var(--color-text)]"
                   />
                   <button
@@ -162,7 +176,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       </svg>
                     )}
                   </button>
-                </div>
+                </form>
                 <p className="mt-2 text-xs text-[var(--color-text-muted)]">
                   Key 仅保存在本地浏览器。如未设置，将尝试使用默认配置。
                 </p>

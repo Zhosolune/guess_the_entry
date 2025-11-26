@@ -437,6 +437,12 @@
   }
 }
 
+/* Edge 浏览器：隐藏密码输入框的默认“显示密码/清除”图标，避免与自定义图标重叠 */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 /* 暗色模式组件覆盖（通过 html.dark 激活） */
 /* 暗色模式下通过 html.dark 根变量覆盖，无需组件级别 @apply 覆盖 */
 
