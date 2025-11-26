@@ -88,6 +88,7 @@ const App: React.FC = memo(() => {
       console.error('游戏初始化失败:', error);
       stopTimer();
       resetTimer();
+      throw error;
     }
   }, [clearError, start, initializeGame, stopTimer, resetTimer]);
 
@@ -309,7 +310,9 @@ const App: React.FC = memo(() => {
               onStartGame={handleStartGame}
               isLoading={gameState.isLoading}
               initialHintsEnabled={hintsEnabled}
-            />
+          onOpenSettings={handleOpenSettings}
+          onOpenGameInfo={handleOpenGameInfo}
+        />
           </div>
         )}
 

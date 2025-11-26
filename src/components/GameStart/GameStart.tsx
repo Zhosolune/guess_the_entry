@@ -1,12 +1,15 @@
 import React, { useState, useCallback, memo } from 'react';
 import { CATEGORIES } from '../../constants/game.constants';
-import { Play } from 'lucide-react';
+import { Play, Settings, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { AppError, ErrorType } from '../../utils/errorHandler';
 
 import { GameCategory } from '../../types/game.types';
 
 interface GameStartProps {
   onStartGame: (category: GameCategory, enableHints: boolean) => void;
+  onOpenSettings?: () => void;
+  onOpenGameInfo?: () => void;
   isLoading: boolean;
   initialHintsEnabled?: boolean;
 }
@@ -16,10 +19,11 @@ interface GameStartProps {
  * 提供领域选择和游戏开始功能
  * 使用React.memo优化渲染性能
  */
-export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoading, initialHintsEnabled }) => {
+export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, onOpenSettings, onOpenGameInfo, isLoading, initialHintsEnabled }) => {
   const [selectedCategory, setSelectedCategory] = useState<GameCategory | ''>('');
   const [hoveredCategory, setHoveredCategory] = useState<string>('');
   const [enableHints, setEnableHints] = useState<boolean>(initialHintsEnabled ?? true);
+  const [showAuthDialog, setShowAuthDialog] = useState<boolean>(false);
 
   React.useEffect(() => {
     if (typeof initialHintsEnabled === 'boolean') {
@@ -70,6 +74,18 @@ export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoadin
       await onStartGame(selectedCategory as GameCategory, enableHints);
     } catch (error: any) {
       console.error('游戏开始失败:', error);
+      
+      // 检查是否为配置错误（缺少API Key）
+      if (error instanceof AppError && error.type === ErrorType.CONFIG_ERROR) {
+        setShowAuthDialog(true);
+        return;
+      }
+      // 兼容可能未被正确转换为AppError的情况
+      if (error?.code === 'MISSING_API_KEY') {
+        setShowAuthDialog(true);
+        return;
+      }
+
       toast.error(error.message || '游戏开始失败，请稍后重试');
     }
   }, [selectedCategory, enableHints, onStartGame]);
@@ -169,6 +185,56 @@ export const GameStart: React.FC<GameStartProps> = memo(({ onStartGame, isLoadin
           </div>
         )}
       </div>
+
+      {/* 配置提示对话框 */}
+      {showAuthDialog && (
+        <div className="fixed inset-0 z-50 flex justify-center items-start pt-[20vh] bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[var(--color-surface)] rounded-xl shadow-2xl max-w-md w-full p-6 border border-[var(--color-border)] animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4 text-red-600 dark:text-red-400">
+                <Settings className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-[var(--color-text)] mb-2">需要配置 API Key</h3>
+              <p className="text-[var(--color-text-muted)] mb-6 leading-relaxed">
+                检测到您未配置 API Key 或验证码。
+                <br/>
+                请先在设置中配置 API Key，或输入邀请码以启用游戏。
+              </p>
+              
+              <div className="flex flex-col w-full gap-3">
+                <div className="flex w-full gap-3">
+                  <button 
+                    onClick={() => {
+                      setShowAuthDialog(false);
+                      onOpenGameInfo?.();
+                    }}
+                    className="flex-1 px-4 py-2.5 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    去填写
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setShowAuthDialog(false);
+                      onOpenSettings?.();
+                    }}
+                    className="flex-1 px-4 py-2.5 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    去设置
+                  </button>
+                </div>
+                <button 
+                  onClick={() => setShowAuthDialog(false)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg-hover)] transition-colors font-medium"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GameInfoText } from '../assets/gameInfo';
+import { PasteIcon } from '../assets/pasteIcon';
+import { toast } from 'sonner';
 
 interface GameInfoDrawerProps {
   /**
@@ -73,6 +75,25 @@ const GameInfoDrawer: React.FC<GameInfoDrawerProps> = ({
     }
   };
 
+  /**
+   * 处理粘贴功能
+   */
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setInviteCode(text.trim().toUpperCase());
+        if (verificationStatus !== 'idle') {
+          setVerificationStatus('idle');
+        }
+        toast.success('已粘贴剪贴板内容');
+      }
+    } catch (err) {
+      console.error('无法读取剪贴板:', err);
+      toast.error('无法读取剪贴板内容');
+    }
+  };
+
   return (
     <>
       {isOpen && (
@@ -108,18 +129,28 @@ const GameInfoDrawer: React.FC<GameInfoDrawerProps> = ({
                 邀请码验证（启用内置模型）
               </label>
               <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  value={inviteCode}
-                  onChange={handleCodeChange}
-                  placeholder="请输入邀请码"
-                  className="flex-1 px-3 py-2 bg-[var(--color-bg-input)] border border-[var(--color-border)] rounded text-[var(--color-text)] focus:outline-none transition-colors uppercase"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleVerify();
-                    }
-                  }}
-                />
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={inviteCode}
+                    onChange={handleCodeChange}
+                    placeholder="请输入邀请码"
+                    className="w-full px-3 py-2 pr-10 bg-[var(--color-bg-input)] border border-[var(--color-border)] rounded text-[var(--color-text)] focus:outline-none transition-colors uppercase"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleVerify();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePaste}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors p-1"
+                    title="粘贴剪贴板内容"
+                  >
+                    <PasteIcon />
+                  </button>
+                </div>
                 <button
                   onClick={handleVerify}
                   disabled={inviteCode.length !== 4}
