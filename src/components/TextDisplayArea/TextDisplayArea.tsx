@@ -26,8 +26,6 @@ interface TextDisplayAreaProps {
    * 游戏状态
    */
   gameStatus: GameStatus;
-  hintSelectMode?: boolean;
-  onHintSelect?: (char: string) => void;
 }
 
 /**
@@ -42,8 +40,6 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
   autoReveal,
   isMobileLayout = true,
   gameStatus,
-  hintSelectMode = false,
-  onHintSelect,
 }) => {
   /**
    * 判断是否为标点符号（中英文）
@@ -81,14 +77,6 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
     });
   }, [entryData.encyclopedia, revealedChars, isPunctuation]);
 
-  const entryNonPuncLen = useMemo(() => {
-    return entryData.entry.split('').filter(c => !isPunctuation(c)).length;
-  }, [entryData.entry, isPunctuation]);
-
-  const entryMaskedCount = useMemo(() => {
-    return entryContent.filter(it => !it.isPunctuation && !it.revealed).length;
-  }, [entryContent]);
-
   /**
    * 渲染遮盖/揭示的内容为统一的字符块
    * - 非遮罩：已揭示字符，与遮罩块同尺寸，支持首次揭示动画
@@ -98,8 +86,7 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
    * @param items - 需要渲染的字符项列表
    * @returns React节点数组
    */
-  const renderMaskedContent = useCallback((items: Array<{char: string, revealed: boolean, key: string, isPunctuation?: boolean}>, startOffset: number, disableCount: number) => {
-    let maskedSeen = 0;
+  const renderMaskedContent = useCallback((items: Array<{char: string, revealed: boolean, key: string, isPunctuation?: boolean}>) => {
     return items.map((item) => {
       const isNewlyRevealed = newlyRevealed.includes(item.char);
       const base = 'char-block';
@@ -133,27 +120,9 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
         );
       }
 
-      if (!item.revealed && hintSelectMode && onHintSelect) {
-        const globalIndex = startOffset + maskedSeen;
-        maskedSeen += 1;
-        if (globalIndex < disableCount) {
-          return (
-            <span key={item.key} className={`${base} masked-char hint-disabled-front`} aria-hidden={true} />
-          );
-        }
-        return (
-          <button
-            key={item.key}
-            type="button"
-            className={`${base} masked-char hint-selectable hint-breathe cursor-pointer`}
-            onClick={() => onHintSelect(item.char)}
-            aria-label={`揭示${item.char}`}
-          />
-        );
-      }
       return <span key={item.key} className={`${base} masked-char`} aria-hidden={true} />;
     });
-  }, [newlyRevealed, autoReveal, hintSelectMode, onHintSelect]);
+  }, [newlyRevealed, autoReveal]);
 
   // 百科内容容器引用，用于应用自适应左右内边距
   const encyclopediaContainerRef = useRef<HTMLDivElement | null>(null);
@@ -240,12 +209,12 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
             <div className="flex flex-col gap-4 h-full overflow-y-auto custom-scrollbar pb-2" style={{ maxHeight: contentMax }}>
               {/* 词条标题 */}
               <div className="w-full text-2xl leading-relaxed rounded-lg break-all justify-center flex flex-wrap gap-1 flex-none">
-                {renderMaskedContent(entryContent, 0, entryNonPuncLen)}
+                {renderMaskedContent(entryContent)}
               </div>
 
               {/* 百科内容（自适应左右内边距） */}
               <div ref={encyclopediaContainerRef} className="w-full text-base leading-relaxed rounded-lg break-all flex flex-wrap gap-1">
-                {renderMaskedContent(encyclopediaContent, 0, entryNonPuncLen)}
+                {renderMaskedContent(encyclopediaContent)}
               </div>
             </div>
           </div>
@@ -262,12 +231,12 @@ export const TextDisplayArea: React.FC<TextDisplayAreaProps> = memo(({
           <div className="flex flex-col gap-4">
             {/* 词条标题 */}
             <div className="w-full text-2xl leading-relaxed rounded-lg break-all justify-center flex flex-wrap gap-1">
-              {renderMaskedContent(entryContent, 0, entryNonPuncLen)}
+              {renderMaskedContent(entryContent)}
             </div>
 
             {/* 百科内容（自适应左右内边距） */}
             <div ref={encyclopediaContainerRef} className="w-full text-base leading-relaxed rounded-lg break-all flex flex-wrap gap-1">
-              {renderMaskedContent(encyclopediaContent, 0, entryNonPuncLen)}
+              {renderMaskedContent(encyclopediaContent)}
             </div>
           </div>
         </div>

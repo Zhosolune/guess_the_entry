@@ -30,7 +30,7 @@ interface GameLayoutProps {
   onToggleQuickRef?: () => void;
   /** 速查表是否打开（用于固定按钮主题色） */
   quickRefOpen?: boolean;
-  onHintSelect?: (char: string) => void;
+  onApplySmartHint?: () => Promise<{ success: boolean; char?: string; reason?: string }>;
 }
 
 /**
@@ -46,7 +46,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   graveyard,
   attempts,
   onGuess,
-  onHintSelect,
+  onApplySmartHint,
   isLoading,
   error,
   gameTime,
@@ -60,8 +60,7 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   const [newlyRevealed, setNewlyRevealed] = useState<string[]>([]);
   // 记录已触发过揭示动画的字符，避免重复动画
   const [animatedChars, setAnimatedChars] = useState<Set<string>>(new Set());
-  const [hintActive, setHintActive] = useState<boolean>(false);
-  const [hintSelectMode, setHintSelectMode] = useState<boolean>(false);
+  const [isHintLoading, setIsHintLoading] = useState<boolean>(false);
   const [settlementOpen, setSettlementOpen] = useState<boolean>(false);
   const [fullReveal, setFullReveal] = useState<boolean>(false);
   const hasShownRef = React.useRef<boolean>(false);
@@ -156,27 +155,24 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
   /**
    * 处理提示按钮点击
    */
-  const handleHintClick = useCallback((): void => {
-    if (gameStatus !== 'playing') return;
-    setHintActive(prev => {
-      const next = !prev;
-      setHintSelectMode(next);
-      if (next) {
-        toast.info('提示已开启：点击未揭示字符进行揭示');
-      } else {
-        toast.info('提示已关闭');
-      }
-      return next;
-    });
-  }, [gameStatus]);
+  const handleHintClick = useCallback(async (): Promise<void> => {
+    if (gameStatus !== 'playing' || isHintLoading || !onApplySmartHint) return;
 
-  const handleHintSelect = useCallback((char: string) => {
-    setHintActive(false);
-    setHintSelectMode(false);
-    if (typeof onHintSelect === 'function') {
-      onHintSelect(char);
+    setIsHintLoading(true);
+    try {
+      const result = await onApplySmartHint();
+      if (result.success) {
+        toast.success(`已揭示：${result.char}`);
+      } else {
+        toast.info(result.reason || '无法获取提示');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('提示功能出现错误');
+    } finally {
+      setIsHintLoading(false);
     }
-  }, [onHintSelect]);
+  }, [gameStatus, isHintLoading, onApplySmartHint]);
 
   /**
    * 监听新揭示的字符，仅在首次揭示时触发动画
@@ -278,8 +274,6 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
         autoReveal={fullReveal}
         isMobileLayout={isMobile}
         gameStatus={gameStatus}
-        hintSelectMode={hintSelectMode}
-        onHintSelect={handleHintSelect}
       />
 
       {/* 胜利遮罩动画卡片 */}
@@ -325,11 +319,10 @@ export const GameLayout: React.FC<GameLayoutProps> = memo(({
       <BottomToolbar
         onHintClick={handleHintClick}
         onToggleQuickRef={onToggleQuickRef}
-        disabled={isLoading}
+        disabled={isLoading || isHintLoading}
         hintsEnabled={hintsEnabled && gameStatus === 'playing'}
         fixed={isMobile}
         quickRefOpen={quickRefOpen}
-        hintActive={hintActive}
       />
       
     </Container>

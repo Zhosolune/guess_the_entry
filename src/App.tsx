@@ -23,7 +23,7 @@ const App: React.FC = memo(() => {
     gameState,
     initializeGame,
     handleGuess,
-    handleHintSelectChar,
+    applySmartHint,
     resetGame,
     clearError,
     loadSavedGame
@@ -106,18 +106,6 @@ const App: React.FC = memo(() => {
       }
     }
   }, [clearError, handleGuess]);
-
-  const handleHintSelect = useCallback(async (char: string) => {
-    try {
-      clearError();
-      await handleHintSelectChar(char);
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : '';
-      if (msg.includes('请输入有效的中文字符')) {
-        toast.info('请输入中文字符');
-      }
-    }
-  }, [clearError, handleHintSelectChar]);
 
   /**
    * 计算游戏进度（不统计标点符号）
@@ -326,7 +314,7 @@ const App: React.FC = memo(() => {
             graveyard={gameState.graveyard}
             attempts={gameState.attempts}
             onGuess={handleGameGuess}
-            onHintSelect={handleHintSelect}
+            onApplySmartHint={applySmartHint}
             isLoading={gameState.isLoading}
             error={gameState.error}
             gameTime={gameState.gameStatus === 'victory' && finalSeconds !== null ? finalSeconds : time}

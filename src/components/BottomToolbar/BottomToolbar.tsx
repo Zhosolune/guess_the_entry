@@ -25,10 +25,6 @@ interface BottomToolbarProps {
    * 速查表是否处于打开状态（用于固定主题色显示）
    */
   quickRefOpen?: boolean;
-  /**
-   * 提示流程是否处于激活/进行中（用于固定主题色显示）
-   */
-  hintActive?: boolean;
 }
 
 /**
@@ -43,7 +39,6 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = memo(({
   hintsEnabled = true,
   fixed = true,
   quickRefOpen = false,
-  hintActive = false,
 }) => {
   /**
    * 处理提示按钮点击
@@ -76,7 +71,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = memo(({
             title="提示"
             onClick={handleHintClick}
             disabled={disabled || !hintsEnabled}
-            className={`inline-flex items-center p-0 focus:outline-none gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${hintActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'} ${disabled || !hintsEnabled ? '' : 'hover:text-[var(--color-primary)]'}`}
+            className={`inline-flex items-center p-0 focus:outline-none gap-1 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--color-text-muted)] ${disabled || !hintsEnabled ? '' : 'hover:text-[var(--color-primary)]'}`}
           >
             {/* 灯泡图标 */}
             <svg className="w-5 h-5" viewBox="0 0 32 32" fill="currentColor">

@@ -76,7 +76,7 @@ export async function generateEntry(category: string): Promise<ApiResponse<Entry
     // 如果没有获取到有效Key（包括内置Key的权限），抛出错误
     if (apiKey === null) {
       throw new AppError(
-        '请在设置中配置API Key，或在游戏规则中输入邀请码以启用内置AI助手', 
+        '请在设置中配置API Key，或在游戏规则中输入邀请码以启用内置模型', 
         ErrorType.CONFIG_ERROR, 
         'MISSING_API_KEY'
       );

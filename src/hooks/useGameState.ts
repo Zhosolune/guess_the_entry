@@ -299,44 +299,79 @@ export function useGameState() {
   }, [gameState]);
 
   /**
-   * 处理提示模式下的字符选择
-   *
-   * 功能描述：在提示模式中，点击未揭示字块后，揭示该字符在词条与百科中的全部出现位置；记录提示使用次数并标记本局已使用提示；若因此满足胜利条件则结算并持久化统计。
-   * 参数说明：
-   * - char: string 待揭示的单个中文字符
-   * 返回值说明：
-   * - { success: boolean; reason?: string }
-   * 异常说明：
-   * - 输入校验失败时抛出 ValidationError（非单字符或非中文字符）
+   * 应用智能提示
+   * 
+   * 逻辑：
+   * 1. 扫描当前词条与百科内容
+   * 2. 找出所有未揭示的中文字符
+   * 3. 排除词条中包含的字符（防止剧透）
+   * 4. 统计剩余字符在百科中出现的频率
+   * 5. 选取出现频率最高的字符进行揭示
+   * 6. 如果没有可揭示的字符（所有非词条字符都已揭示），则返回提示
    */
-  const handleHintSelectChar = useCallback(async (char: string) => {
+  const applySmartHint = useCallback(async () => {
     if (gameState.gameStatus !== 'playing' || gameState.isLoading) {
       return { success: false, reason: '游戏未开始或已结束' };
     }
     if (!gameState.currentEntry) {
       return { success: false, reason: '游戏数据不完整' };
     }
-    if (!char || char.length !== 1) {
-      throw ErrorHandler.handleValidationError('请输入单个字符', 'char');
+
+    const { entry, encyclopedia } = gameState.currentEntry;
+    const isPunctuation = (char: string): boolean => /[\p{P}\p{S}]/u.test(char);
+    const isValidChar = (char: string): boolean => /^[\u4e00-\u9fa5]$/.test(char);
+
+    // 构建词条字符集（用于排除）
+    const entryChars = new Set<string>();
+    for (const char of entry) {
+      if (isValidChar(char)) {
+        entryChars.add(char);
+      }
     }
-    if (!/^[\u4e00-\u9fa5]$/.test(char)) {
-      throw ErrorHandler.handleValidationError('请输入有效的中文字符', 'char');
+
+    // 统计百科中未揭示字符的频率
+    const frequencyMap = new Map<string, number>();
+    for (const char of encyclopedia) {
+      // 必须是有效汉字、未揭示、且不在词条中
+      if (
+        isValidChar(char) &&
+        !gameState.revealedChars.has(char) &&
+        !entryChars.has(char)
+      ) {
+        frequencyMap.set(char, (frequencyMap.get(char) || 0) + 1);
+      }
     }
-    if (gameState.revealedChars.has(char) || gameState.guessedChars.has(char)) {
-      return { success: false, reason: '该字符已经揭示' };
+
+    // 如果没有可揭示的字符
+    if (frequencyMap.size === 0) {
+      return { success: false, reason: '没有更多可提示的线索了' };
     }
-    const normalizedChar = char.trim();
-    const entry = gameState.currentEntry.entry;
-    const encyclopedia = gameState.currentEntry.encyclopedia;
-    const entryPositions = findCharIndices(entry, normalizedChar);
-    const encyclopediaPositions = findCharIndices(encyclopedia, normalizedChar);
-    if (entryPositions.length === 0 && encyclopediaPositions.length === 0) {
-      return { success: false, reason: '字符不存在' };
+
+    // 找出频率最高的字符
+    let targetChar = '';
+    
+    // 将 Map 转为数组进行排序，确保确定性（频率相同时取任意一个即可）
+    const sortedEntries = Array.from(frequencyMap.entries()).sort((a, b) => b[1] - a[1]);
+    if (sortedEntries.length > 0) {
+      targetChar = sortedEntries[0][0];
+    } else {
+       return { success: false, reason: '没有更多可提示的线索了' };
     }
+
+    // 复用 handleHintSelectChar 的核心逻辑（揭示字符并保存状态）
+    // 注意：这里我们直接构造一个新的函数调用或直接执行逻辑，为了避免代码重复，
+    // 我们可以将 handleHintSelectChar 重构为通用的 revealCharWithHint 
+    // 但为了最小化改动，我们直接在这里执行揭示逻辑。
+    
     const newRevealedChars = new Set(gameState.revealedChars);
     const newGuessedChars = new Set(gameState.guessedChars);
-    newGuessedChars.add(normalizedChar);
-    newRevealedChars.add(normalizedChar);
+    
+    // 智能提示揭示的字符，算作已揭示，但不一定算作用户“猜过”的（guessedChars通常指键盘输入）
+    // 但为了逻辑统一（revealedChars 用于显示，guessedChars 用于胜利判定和键盘状态），
+    // 提示揭示的字符也应当被视为“已解决”，并在键盘上高亮。
+    newGuessedChars.add(targetChar);
+    newRevealedChars.add(targetChar);
+
     const newGameState: GameState = {
       ...gameState,
       revealedChars: newRevealedChars,
@@ -344,6 +379,8 @@ export function useGameState() {
       hintUsed: true,
       hintCount: gameState.hintCount + 1
     };
+
+    // 检查是否获胜（理论上提示排除词条字符后不会直接导致获胜，但防御性编程）
     const won = checkVictory(entry, newGuessedChars);
     if (won) {
       newGameState.gameStatus = 'victory';
@@ -369,7 +406,6 @@ export function useGameState() {
         console.warn('追加排除词失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
       }
       try {
-        const isPunctuation = (char: string): boolean => /[\p{P}\p{S}]/u.test(char);
         const entryChars = entry.split('');
         const encyChars = (gameState.currentEntry?.encyclopedia || '').split('');
         const totalPositions = entryChars.filter(c => !isPunctuation(c)).length + encyChars.filter(c => !isPunctuation(c)).length;
@@ -381,13 +417,16 @@ export function useGameState() {
         console.warn('更新持久化统计失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(e)));
       }
     }
+
     setGameState(newGameState);
     try {
       await saveGameState(newGameState);
     } catch (storageError) {
       console.warn('游戏状态保存失败:', ErrorHandler.getErrorLog(ErrorHandler.handleError(storageError)));
     }
-    return { success: true };
+
+    return { success: true, char: targetChar };
+
   }, [gameState]);
 
   /**
@@ -469,7 +508,7 @@ export function useGameState() {
     stats,
     initializeGame,
     handleGuess,
-    handleHintSelectChar,
+    applySmartHint,
     resetGame,
     updateCurrentTime,
     loadSavedGame,
