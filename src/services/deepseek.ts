@@ -102,9 +102,11 @@ export async function generateEntry(category: string): Promise<ApiResponse<Entry
     5. 尽量兼顾词条的时效性，最好选取近年间流传度较高的热点词条
     6. 避免抽象的概念或过于专业的术语
     7. 词条应当是该领域内广为人知的概念或事物。
-    8. 排除列表中的词条不要再次生成。`;
+    8. 排除列表中的词条不要再次生成。
+    9. 必须严格遵守用户指定的领域，生成的词条和百科内容必须属于该领域，否则视为无效输出。`;
 
     const userPrompt = `领域：${actualCategory}
+    注意：生成的词条必须严格属于“${actualCategory}”领域。
     排除词条：${excludeEntries.join(', ')}
     请生成一个新的词条。`;
 
