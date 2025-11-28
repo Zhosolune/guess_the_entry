@@ -161,9 +161,9 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
         const sumCorrect = records.reduce((sum, i) => sum + (i.hitCount || 0), 0);
         const sumWrong = records.reduce((sum, i) => sum + (i.wrongCount || 0), 0);
         const accuracy = (sumCorrect + sumWrong) > 0 ? Math.round(100 * (sumCorrect / (sumCorrect + sumWrong))) : 0;
-        const hintDiscipline = avgHintCountLocal === 0
+        const hintDiscipline = records.length === 0 ? 0 : (avgHintCountLocal === 0
           ? 100
-          : Math.min(100, Math.max(0, 100 * Math.exp(-avgHintCountLocal / β)));
+          : Math.min(100, Math.max(0, 100 * Math.exp(-avgHintCountLocal / β))));
         // 均衡度 = 领域丰富度（香农熵归一）与成绩均衡度（能力变异系数的反向）综合
         const victoryCounts = keys.map(k => (agg[k]?.victories || 0));
         const sumVictoriesLocal2 = victoryCounts.reduce((s, v) => s + v, 0);
@@ -186,7 +186,7 @@ const ScoreboardDrawer: React.FC<ScoreboardDrawerProps> = ({
         }
         const balance = Math.round(Math.max(0, Math.min(100, (richnessEntropy + balanceAbility) / 2)));
         const progressInv = 5 + 95 * (1 - (avgProgressLocal / 100));
-        const progressScore = Math.max(1, Math.min(99, Math.round(progressInv)));
+        const progressScore = records.length === 0 ? 0 : Math.max(1, Math.min(99, Math.round(progressInv)));
         setProfileChartData({ 速度: Math.round(speed), 精度: accuracy, 独立: Math.round(hintDiscipline), 均衡: balance, 进度: progressScore });
       } catch {}
     })();
